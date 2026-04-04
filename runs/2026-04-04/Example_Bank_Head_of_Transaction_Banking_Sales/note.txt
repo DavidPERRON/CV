@@ -1,0 +1,3 @@
+Positioning for Example Bank - Head of Transaction Banking Sales
+
+This is a placeholder package. Replace this generation logic with your model call.

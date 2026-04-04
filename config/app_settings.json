@@ -1,0 +1,16 @@
+{
+  "top_threshold": 80,
+  "mid_threshold": 60,
+  "max_jobs_per_run": 30,
+  "max_docs_generated": 10,
+  "default_language": "EN",
+  "preferred_roles": "",
+  "preferred_sectors": "",
+  "preferred_geographies": "France, Europe",
+  "target_companies": "",
+  "excluded_companies": "",
+  "linkedin_email": "aequitas.consultus@gmail.com",
+  "gmail_app_password": "qokdej-riPkyp-4wuggy",
+  "imap_host": "imap.gmail.com",
+  "imap_folder": "INBOX"
+}
