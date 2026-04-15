@@ -9,8 +9,7 @@
   "preferred_geographies": "France, Europe",
   "target_companies": "",
   "excluded_companies": "",
-  "linkedin_email": "aequitas.consultus@gmail.com",
-  "gmail_app_password": "qokdej-riPkyp-4wuggy",
   "imap_host": "imap.gmail.com",
-  "imap_folder": "INBOX"
+  "imap_folder": "INBOX",
+  "_secrets_note": "LINKEDIN_EMAIL and GMAIL_APP_PASSWORD are loaded from environment variables (see .env.example). Do not store secrets in this file."
 }
