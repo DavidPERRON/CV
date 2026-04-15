@@ -1,0 +1,391 @@
+# Sources à scraper. Catégorisées par secteur.
+# Chaque source est soit un flux RSS, soit une page carrière HTML.
+# Les URLs et sélecteurs CSS sont des points de départ — à vérifier lors du premier run
+# et à ajuster si le site a changé.
+#
+# Périmètre géographique : Europe (UK, France, Benelux, DACH, Nordics, Iberia, Italy, Switzerland)
+# + Canada. Ajuster `preferred_geographies` dans config/jobs.yaml.
+
+job_boards:
+  rss:
+    - name: Welcome to the Jungle — Senior & Lead FR
+      url: https://www.welcometothejungle.com/fr/jobs.rss?query=senior%20OR%20lead%20OR%20head&refinementList%5Bcontract_type%5D%5B0%5D=full_time
+    - name: Indeed — Director Banking France
+      url: https://fr.indeed.com/rss?q=director+banking&l=France
+    - name: Indeed — Head of Sales Fintech Europe
+      url: https://fr.indeed.com/rss?q=head+of+sales+fintech&l=Europe
+    - name: Indeed CA — Director / VP
+      url: https://ca.indeed.com/rss?q=%22director%22+OR+%22vp%22&l=Canada
+    - name: eFinancialCareers — Director+ EMEA
+      url: https://www.efinancialcareers.com/rss/search?q=director&l=Europe
+  email:
+    - name: LinkedIn Job Alerts
+      mailbox: INBOX
+      from_contains: jobs-noreply@linkedin.com
+      subject_contains: "Job alert"
+    - name: Welcome to the Jungle alerts
+      mailbox: INBOX
+      from_contains: welcometothejungle.com
+      subject_contains: "alerte"
+
+# ------------------------------------------------------------
+# Chasseurs de têtes — executive search (souvent mandats cachés)
+# ------------------------------------------------------------
+executive_search:
+  career_pages:
+    - name: Eric Salmon & Partners
+      url: https://www.ericsalmon.com/current-searches/
+      link_selector: 'a[href*="/search/"]'
+    - name: Spencer Stuart — current opportunities
+      url: https://www.spencerstuart.com/careers/current-opportunities
+      link_selector: 'a[href*="/opportunities/"]'
+    - name: Egon Zehnder — opportunities
+      url: https://www.egonzehnder.com/careers
+      link_selector: 'a[href*="/jobs/"]'
+    - name: Heidrick & Struggles — live assignments
+      url: https://www.heidrick.com/en/careers
+      link_selector: 'a[href*="/jobs/"]'
+    - name: Russell Reynolds Associates
+      url: https://www.russellreynolds.com/en/careers
+      link_selector: 'a[href*="/careers/"]'
+    - name: Korn Ferry — executive opportunities
+      url: https://www.kornferry.com/careers
+      link_selector: 'a[href*="/opportunity/"]'
+    - name: Odgers Berndtson — opportunities
+      url: https://www.odgersberndtson.com/en-gb/careers
+      link_selector: 'a[href*="/opportunities/"]'
+    - name: Amrop
+      url: https://www.amrop.com/careers
+      link_selector: 'a[href*="/career/"]'
+    - name: Alexander Hughes
+      url: https://www.alexanderhughes.com/careers
+      link_selector: 'a[href*="/careers/"]'
+    - name: Stanton Chase
+      url: https://www.stantonchase.com/career-opportunities/
+      link_selector: 'a[href*="/job/"]'
+    - name: Leathwaite — live roles
+      url: https://www.leathwaite.com/live-roles
+      link_selector: 'a[href*="/live-roles/"]'
+    - name: Eric Salmon — France
+      url: https://www.ericsalmon.com/en/current-searches/
+      link_selector: 'a[href*="/search/"]'
+    - name: PageGroup Executive — Europe
+      url: https://www.michaelpage.com/executive-search
+      link_selector: 'a[href*="/job-detail/"]'
+
+# ------------------------------------------------------------
+# Banques — France, UK, Benelux, DACH, Nordics, Iberia, Italy, Switzerland, Canada
+# ------------------------------------------------------------
+banking:
+  career_pages:
+    # France
+    - name: BNP Paribas — Careers
+      url: https://group.bnpparibas/en/careers
+      link_selector: 'a[href*="/offre-"]'
+    - name: Société Générale — Careers
+      url: https://careers.societegenerale.com/en/offers
+      link_selector: 'a.offer-card__link'
+    - name: Crédit Agricole CIB
+      url: https://www.ca-cib.com/careers
+      link_selector: 'a[href*="/job/"]'
+    - name: Natixis
+      url: https://careers.natixis.com/en/our-offers
+      link_selector: 'a.offer-title'
+    - name: BPCE
+      url: https://jobs.bpce.fr/
+      link_selector: 'a[href*="/offre/"]'
+    - name: Rothschild & Co
+      url: https://www.rothschildandco.com/en/careers/current-opportunities/
+      link_selector: 'a[href*="/job-profile/"]'
+    - name: Lazard
+      url: https://www.lazard.com/careers/experienced-professionals/open-positions/
+      link_selector: 'a[href*="/job/"]'
+    # UK
+    - name: HSBC — Global careers
+      url: https://www.hsbc.com/careers/job-search
+      link_selector: 'a[href*="/search-jobs/"]'
+    - name: Barclays
+      url: https://search.jobs.barclays/search-jobs
+      link_selector: 'a[href*="/job/"]'
+    - name: NatWest
+      url: https://jobs.natwestgroup.com/
+      link_selector: 'a[href*="/job/"]'
+    - name: Lloyds Banking Group
+      url: https://careers.lloydsbankinggroup.com/jobs/
+      link_selector: 'a[href*="/job/"]'
+    - name: Standard Chartered
+      url: https://scb.taleo.net/careersection/ex/jobsearch.ftl
+      link_selector: 'a[href*="/jobdetail."]'
+    # Benelux
+    - name: ING — careers
+      url: https://www.ing.jobs/global/careers.htm
+      link_selector: 'a[href*="/job-details/"]'
+    - name: ABN AMRO
+      url: https://www.abnamro.com/careers
+      link_selector: 'a[href*="/jobs/"]'
+    - name: Rabobank
+      url: https://jobs.rabobank.com/
+      link_selector: 'a[href*="/vacancy/"]'
+    - name: KBC Group
+      url: https://www.kbc.com/en/jobs.html
+      link_selector: 'a[href*="/job/"]'
+    # DACH + Switzerland
+    - name: Deutsche Bank
+      url: https://careers.db.com/professionals/search-roles/
+      link_selector: 'a[href*="/professional/"]'
+    - name: Commerzbank
+      url: https://www.commerzbank.com/en/hauptnavigation/karriere/berufserfahrene/jobs/suche_1/suche_1.html
+      link_selector: 'a[href*="/job/"]'
+    - name: UBS
+      url: https://www.ubs.com/global/en/careers/search-jobs.html
+      link_selector: 'a[href*="/job/"]'
+    - name: Julius Baer
+      url: https://www.juliusbaer.com/en/careers/current-openings/
+      link_selector: 'a[href*="/opening/"]'
+    - name: Pictet
+      url: https://careers.group.pictet/careers
+      link_selector: 'a[href*="/job/"]'
+    # Nordics
+    - name: Nordea
+      url: https://www.nordea.com/en/careers/jobs
+      link_selector: 'a[href*="/job/"]'
+    - name: Danske Bank
+      url: https://danskebank.com/careers/find-a-job
+      link_selector: 'a[href*="/vacancy/"]'
+    - name: SEB
+      url: https://sebgroup.com/career
+      link_selector: 'a[href*="/vacancy/"]'
+    - name: Handelsbanken
+      url: https://www.handelsbanken.com/en/career
+      link_selector: 'a[href*="/job/"]'
+    # Iberia
+    - name: Santander
+      url: https://www.santander.com/en/careers
+      link_selector: 'a[href*="/job/"]'
+    - name: BBVA
+      url: https://careers.bbva.com/
+      link_selector: 'a[href*="/job/"]'
+    - name: CaixaBank
+      url: https://www.caixabank.com/en/about-us/careers.html
+      link_selector: 'a[href*="/job/"]'
+    # Italy
+    - name: UniCredit
+      url: https://www.unicreditgroup.eu/en/careers.html
+      link_selector: 'a[href*="/job/"]'
+    - name: Intesa Sanpaolo
+      url: https://group.intesasanpaolo.com/en/careers
+      link_selector: 'a[href*="/job/"]'
+    - name: Mediobanca
+      url: https://www.mediobanca.com/en/careers.html
+      link_selector: 'a[href*="/job/"]'
+    # Canada
+    - name: RBC — Royal Bank of Canada
+      url: https://jobs.rbc.com/ca/en
+      link_selector: 'a[href*="/job/"]'
+    - name: TD Bank
+      url: https://jobs.td.com/en-CA/
+      link_selector: 'a[href*="/job/"]'
+    - name: BMO
+      url: https://jobs.bmo.com/ca/en
+      link_selector: 'a[href*="/job/"]'
+    - name: Scotiabank
+      url: https://jobs.scotiabank.com/
+      link_selector: 'a[href*="/job/"]'
+    - name: CIBC
+      url: https://cibc.wd3.myworkdayjobs.com/en-US/campus
+      link_selector: 'a[href*="/job/"]'
+    - name: Banque Nationale du Canada
+      url: https://jobs.nbc.ca/
+      link_selector: 'a[href*="/job/"]'
+
+# ------------------------------------------------------------
+# Fintech & paiements — Europe + Canada
+# ------------------------------------------------------------
+fintech:
+  career_pages:
+    # France
+    - name: Qonto
+      url: https://qonto.com/en/careers
+      link_selector: 'a[href*="/jobs/"]'
+    - name: Alan
+      url: https://alan.com/careers
+      link_selector: 'a[href*="/jobs/"]'
+    - name: Lydia
+      url: https://lydia-app.com/jobs/
+      link_selector: 'a.job-card'
+    - name: Swile
+      url: https://www.swile.co/fr-fr/jobs
+      link_selector: 'a[href*="/jobs/"]'
+    - name: Younited
+      url: https://www.younited.com/fr/jobs/
+      link_selector: 'a[href*="/jobs/"]'
+    - name: Shine
+      url: https://www.shine.fr/carrieres
+      link_selector: 'a[href*="/carrieres/"]'
+    - name: Pigment
+      url: https://www.pigment.com/jobs
+      link_selector: 'a[href*="/jobs/"]'
+    - name: Ledger
+      url: https://www.ledger.com/jobs
+      link_selector: 'a[href*="/jobs/"]'
+    # Pan-Europe
+    - name: Stripe — Europe
+      url: https://stripe.com/jobs/search?office_locations=europe
+      link_selector: 'a[href*="/jobs/listing/"]'
+    - name: Revolut
+      url: https://www.revolut.com/careers
+      link_selector: 'a[href*="/careers/position/"]'
+    - name: Adyen
+      url: https://careers.adyen.com/vacancies
+      link_selector: 'a[href*="/vacancy/"]'
+    - name: Mollie
+      url: https://jobs.mollie.com/
+      link_selector: 'a[href*="/vacancies/"]'
+    - name: Klarna
+      url: https://www.jobs.klarna.com/
+      link_selector: 'a[href*="/jobs/"]'
+    - name: N26
+      url: https://n26.com/en/careers
+      link_selector: 'a[href*="/careers/"]'
+    - name: Wise
+      url: https://wise.com/jobs/
+      link_selector: 'a[href*="/jobs/"]'
+    - name: Checkout.com
+      url: https://www.checkout.com/careers
+      link_selector: 'a[href*="/careers/"]'
+    - name: Monzo
+      url: https://monzo.com/careers/
+      link_selector: 'a[href*="/careers/"]'
+    - name: SumUp
+      url: https://sumup.com/careers/
+      link_selector: 'a[href*="/careers/"]'
+    - name: Trade Republic
+      url: https://traderepublic.com/careers
+      link_selector: 'a[href*="/careers/"]'
+    - name: Raisin
+      url: https://www.raisin.com/careers
+      link_selector: 'a[href*="/jobs/"]'
+    # Canada
+    - name: Wealthsimple
+      url: https://www.wealthsimple.com/en-ca/careers
+      link_selector: 'a[href*="/careers/"]'
+    - name: Nuvei
+      url: https://nuvei.com/careers/
+      link_selector: 'a[href*="/careers/"]'
+    - name: Clearco
+      url: https://clear.co/careers
+      link_selector: 'a[href*="/careers/"]'
+    - name: KOHO
+      url: https://www.koho.ca/careers
+      link_selector: 'a[href*="/careers/"]'
+
+# ------------------------------------------------------------
+# AI labs & AI-native companies — Europe + Canada + global remote
+# ------------------------------------------------------------
+ai_labs:
+  career_pages:
+    - name: Anthropic
+      url: https://www.anthropic.com/jobs
+      link_selector: 'a[href*="/jobs/"]'
+    - name: OpenAI
+      url: https://openai.com/careers/search
+      link_selector: 'a[href*="/careers/"]'
+    - name: Mistral AI
+      url: https://jobs.lever.co/mistral
+      link_selector: 'a.posting-title'
+    - name: Hugging Face
+      url: https://apply.workable.com/huggingface/
+      link_selector: 'a[href*="/j/"]'
+    - name: Google DeepMind
+      url: https://deepmind.google/about/careers/
+      link_selector: 'a[href*="/jobs/"]'
+    - name: Meta AI
+      url: https://www.metacareers.com/jobs?teams[0]=AI
+      link_selector: 'a[href*="/jobs/"]'
+    - name: Scale AI
+      url: https://scale.com/careers
+      link_selector: 'a[href*="/careers/"]'
+    - name: Poolside
+      url: https://jobs.ashbyhq.com/poolside
+      link_selector: 'a[href*="/poolside/"]'
+    - name: H Company
+      url: https://www.hcompany.ai/careers
+      link_selector: 'a[href*="/careers/"]'
+    - name: Kyutai
+      url: https://kyutai.org/careers
+      link_selector: 'a[href*="/careers/"]'
+    - name: Stability AI
+      url: https://stability.ai/careers
+      link_selector: 'a[href*="/jobs/"]'
+    - name: Cohere — Toronto
+      url: https://cohere.com/careers
+      link_selector: 'a[href*="/careers/"]'
+    - name: Synthesia
+      url: https://www.synthesia.io/careers
+      link_selector: 'a[href*="/careers/"]'
+    - name: ElevenLabs
+      url: https://elevenlabs.io/careers
+      link_selector: 'a[href*="/careers/"]'
+    - name: Aleph Alpha
+      url: https://aleph-alpha.com/careers/
+      link_selector: 'a[href*="/careers/"]'
+    - name: Nabla
+      url: https://www.nabla.com/careers/
+      link_selector: 'a[href*="/careers/"]'
+
+# ------------------------------------------------------------
+# Enterprise software / AI-applied — Europe + Canada
+# ------------------------------------------------------------
+enterprise_ai:
+  career_pages:
+    - name: Dataiku
+      url: https://www.dataiku.com/careers/#jobs
+      link_selector: 'a[href*="/job/"]'
+    - name: Contentsquare
+      url: https://careers.contentsquare.com/
+      link_selector: 'a.job-item__link'
+    - name: Dust
+      url: https://jobs.ashbyhq.com/dust
+      link_selector: 'a[href*="/dust/"]'
+    - name: Snowflake — EMEA
+      url: https://careers.snowflake.com/us/en/search-results?keywords=EMEA
+      link_selector: 'a[href*="/us/en/job/"]'
+    - name: Databricks
+      url: https://www.databricks.com/company/careers/open-positions
+      link_selector: 'a[href*="/careers/"]'
+    - name: ServiceNow — EMEA
+      url: https://careers.servicenow.com/careers/jobs/?search=&country=France
+      link_selector: 'a[href*="/jobs/"]'
+    - name: Palantir — Europe
+      url: https://www.palantir.com/careers/
+      link_selector: 'a[href*="/careers/"]'
+    - name: Salesforce — France
+      url: https://careers.salesforce.com/en/jobs/?location=France
+      link_selector: 'a[href*="/jobs/"]'
+    - name: SAP
+      url: https://jobs.sap.com/
+      link_selector: 'a[href*="/job/"]'
+    - name: Celonis
+      url: https://www.celonis.com/careers/
+      link_selector: 'a[href*="/careers/"]'
+    - name: UiPath
+      url: https://www.uipath.com/company/careers
+      link_selector: 'a[href*="/careers/"]'
+
+# ------------------------------------------------------------
+# Assurance / fintech adjacente (optionnel — supprimer si pas pertinent)
+# ------------------------------------------------------------
+insurance_fintech:
+  career_pages:
+    - name: AXA Group
+      url: https://jobs.axa.com/
+      link_selector: 'a[href*="/job/"]'
+    - name: Allianz
+      url: https://careers.allianz.com/
+      link_selector: 'a[href*="/job/"]'
+    - name: Generali
+      url: https://www.generali.com/careers
+      link_selector: 'a[href*="/jobs/"]'
+    - name: Wefox
+      url: https://www.wefox.com/en/careers
+      link_selector: 'a[href*="/careers/"]'

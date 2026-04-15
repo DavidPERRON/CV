@@ -1,0 +1,73 @@
+# Job search configuration. Environment-agnostic — secrets stay in .env.
+
+scoring:
+  top_threshold: 80       # top-tier match, auto-generate application
+  mid_threshold: 60       # generate only with --force
+  min_jd_words: 300       # discard postings with too-thin descriptions
+
+search:
+  max_jobs_per_run: 30
+  max_docs_generated: 10
+  default_language: EN
+  preferred_roles:
+    - "Head of"
+    - "Managing Director"
+    - "Director"
+    - "VP"
+    - "Chief"
+  preferred_sectors:
+    - banking
+    - corporate banking
+    - transaction banking
+    - applied AI
+    - enterprise software
+  preferred_geographies:
+    - France
+    - United Kingdom
+    - Benelux
+    - DACH
+    - Switzerland
+    - Nordics
+    - Iberia
+    - Italy
+    - Europe (remote)
+    - Canada
+  target_companies: []
+  excluded_companies: []
+  # Seniority filter: any of these tokens in the title discards the posting.
+  junior_title_blocklist:
+    - intern
+    - internship
+    - stagiaire
+    - stage
+    - apprenti
+    - apprentice
+    - graduate
+    - junior
+    - entry level
+    - associate
+    - analyst
+    - trainee
+    - assistant
+
+extraction:
+  timeout_seconds: 20
+  user_agent: "Mozilla/5.0 (compatible; cv-agent/0.1; +https://github.com/davidPERRON/CV)"
+
+llm:
+  provider: anthropic
+  model: claude-opus-4-6
+  fallback_model: claude-sonnet-4-6
+  max_output_tokens: 8000
+  temperature: 0.2
+
+state:
+  applied_jobs_cap: 1000
+  applied_jobs_ttl_days: 180
+  pending_applications_cap: 50
+
+submit:
+  browser: chromium
+  headless: false
+  user_data_dir_env: PLAYWRIGHT_USER_DATA_DIR
+  abort_after_minutes: 20

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="{{LANG}}">
+<head>
+  <meta charset="utf-8">
+  <title>{{TITLE}}</title>
+  <style>
+    @page { size: A4; margin: 18mm 16mm; }
+    body { font-family: "Helvetica Neue", Arial, sans-serif; color: #111; font-size: 10.5pt; line-height: 1.4; }
+    h1 { font-size: 18pt; margin: 0 0 2pt; }
+    h2 { font-size: 12pt; margin: 14pt 0 4pt; border-bottom: 1px solid #bbb; padding-bottom: 2pt; text-transform: uppercase; letter-spacing: 0.05em; }
+    h3 { font-size: 11pt; margin: 8pt 0 2pt; }
+    ul { margin: 4pt 0 4pt 14pt; padding: 0; }
+    li { margin: 2pt 0; }
+    .meta { color: #555; font-size: 9.5pt; margin-bottom: 10pt; }
+    .role-target { font-size: 11pt; font-weight: 600; color: #333; margin-top: 2pt; }
+    p { margin: 4pt 0; }
+    em { color: #555; }
+  </style>
+</head>
+<body>
+  <h1>{{NAME}}</h1>
+  <div class="role-target">{{ROLE_TARGET}}</div>
+  <div class="meta">{{CONTACT}}</div>
+  <div class="body">
+    {{BODY_HTML}}
+  </div>
+</body>
+</html>
