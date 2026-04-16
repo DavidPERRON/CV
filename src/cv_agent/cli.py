@@ -50,13 +50,29 @@ def search_main(argv: list[str] | None = None) -> int:
         help="Override the per-run posting cap (default 3 in --dry-run, "
         "config value otherwise).",
     )
+    ap.add_argument(
+        "--with-drafts",
+        type=int,
+        default=0,
+        help="In --dry-run, also fully draft the top N scored postings "
+        "(CV adapté + cover letter + positioning + competencies + gap analysis). "
+        "Default 0.",
+    )
     args = ap.parse_args(argv)
     _configure_logging(args.v)
     settings = load_settings()
-    queue_path = run_search(settings, dry_run=args.dry_run, max_jobs=args.max_jobs)
+    queue_path = run_search(
+        settings,
+        dry_run=args.dry_run,
+        max_jobs=args.max_jobs,
+        with_drafts=args.with_drafts,
+    )
     print(f"OK queue written to {queue_path}")
     if args.dry_run:
-        print("(dry-run — outputs under runs/_dry-*/, state untouched)")
+        print(f"(dry-run — outputs under {queue_path.parent}/, state untouched)")
+        summary = queue_path.parent / "summary.md"
+        if summary.exists():
+            print(f"Summary: {summary}")
     # Print a short summary of top 10 from the queue
     with queue_path.open("r", encoding="utf-8") as f:
         rows = [json.loads(ln) for ln in f if ln.strip()]

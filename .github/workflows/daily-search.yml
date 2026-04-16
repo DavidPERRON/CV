@@ -22,6 +22,10 @@ on:
         description: "Cap on postings (only used when dry_run=true)"
         required: false
         default: "3"
+      with_drafts:
+        description: "In dry_run, also draft full CV+cover for top N scored postings (costs LLM tokens)"
+        required: false
+        default: "1"
 
 permissions:
   contents: write
@@ -47,6 +51,7 @@ jobs:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
           MAX_JOBS: ${{ github.event_name == 'workflow_dispatch' && inputs.max_jobs || '' }}
+          WITH_DRAFTS: ${{ github.event_name == 'workflow_dispatch' && inputs.with_drafts || '0' }}
         run: |
           ARGS="-v"
           if [ "$DRY_RUN" = "true" ]; then
@@ -54,9 +59,36 @@ jobs:
             if [ -n "$MAX_JOBS" ]; then
               ARGS="$ARGS --max-jobs $MAX_JOBS"
             fi
-            echo "::notice::DRY RUN — no commit, outputs under runs/_dry-*/"
+            if [ -n "$WITH_DRAFTS" ] && [ "$WITH_DRAFTS" != "0" ]; then
+              ARGS="$ARGS --with-drafts $WITH_DRAFTS"
+            fi
+            echo "::notice::DRY RUN — no commit, outputs uploaded as artifact"
           fi
           python scripts/search_and_score.py $ARGS
+
+      - name: Publish summary.md to the Actions run summary
+        if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.dry_run == 'true' }}
+        run: |
+          set -e
+          LATEST=$(ls -1dt runs/_dry-* 2>/dev/null | head -n1 || true)
+          if [ -n "$LATEST" ] && [ -f "$LATEST/summary.md" ]; then
+            cat "$LATEST/summary.md" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "# Dry-run: no summary.md produced" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "Check the 'Run search' step logs." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload dry-run artifacts
+        if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.dry_run == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: dry-run-${{ github.run_id }}
+          path: |
+            runs/_dry-*/**
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Commit queue + per-job stubs
         if: ${{ github.event_name == 'schedule' || inputs.dry_run != 'true' }}
         run: |

@@ -70,27 +70,44 @@ def _job_dir(job: JobPosting, dry_run: bool = False) -> Path:
 # ------------------------------------------------------------
 # 1. Search + score
 # ------------------------------------------------------------
-def run_search(settings: Settings, dry_run: bool = False, max_jobs: int | None = None) -> Path:
+def run_search(
+    settings: Settings,
+    dry_run: bool = False,
+    max_jobs: int | None = None,
+    with_drafts: int = 0,
+) -> Path:
     """Collect, extract, score postings.
 
     dry_run=True:
       - cap to `max_jobs` postings (default 3) to spare API budget
       - write outputs under runs/_dry-<utc-stamp>/ instead of runs/<date>/
       - skip any state mutation (no fingerprints recorded as 'applied/known')
+      - also writes a human-readable `summary.md` at the run-dir root
+      - if `with_drafts > 0`, fully drafts the top-N scored postings
+        (CV adapté + cover letter + positioning + competencies + gap analysis)
     """
     sources = settings.load_sources()
     log.info("Loading master CV...")
     master_cv = _load_master_cv()
 
-    # Collect
+    # Collect (track counts per source family)
     log.info("Collecting RSS feeds...")
     postings: list[JobPosting] = []
+    source_counts: dict[str, int] = {}
     job_boards = sources.get("job_boards", {})
-    postings += collect_rss(job_boards.get("rss", []))
+    rss_hits = collect_rss(job_boards.get("rss", []))
+    source_counts["rss"] = len(rss_hits)
+    postings += rss_hits
     log.info("Collecting LinkedIn email alerts...")
-    postings += collect_linkedin_emails(job_boards.get("email", []), settings)
+    email_hits = collect_linkedin_emails(job_boards.get("email", []), settings)
+    source_counts["linkedin-email"] = len(email_hits)
+    postings += email_hits
     log.info("Collecting career pages...")
-    postings += collect_career_pages(sources, settings)
+    career_hits = collect_career_pages(sources, settings)
+    source_counts["careers"] = len(career_hits)
+    postings += career_hits
+
+    total_collected = len(postings)
 
     # Dedup vs already-applied (skipped in dry_run so the test stays repeatable)
     before = len(postings)
@@ -122,15 +139,19 @@ def run_search(settings: Settings, dry_run: bool = False, max_jobs: int | None =
         p.description = text
 
     # Drop thin descriptions
+    before_thin = len(postings)
     postings = [p for p in postings if word_count(p.description) >= settings.min_jd_words]
-    log.info("After min_jd_words filter: %d postings.", len(postings))
+    thin_dropped = before_thin - len(postings)
+    log.info("After min_jd_words filter: %d postings (%d thin).", len(postings), thin_dropped)
 
     # Score
     llm = LLMClient(settings)
     scored: list[tuple[JobPosting, ScoringResult]] = []
+    gate_dropped = 0
     for p in postings:
         res = score_posting(p, master_cv, settings, llm=llm)
         if not res.pass_seniority_gate:
+            gate_dropped += 1
             log.info("drop (gate): %s @ %s [%s] %s", p.title, p.company, res.seniority, res.rationale[:80])
             continue
         p.score = res.fit_score
@@ -175,7 +196,128 @@ def run_search(settings: Settings, dry_run: bool = False, max_jobs: int | None =
         }, ensure_ascii=False, indent=2), encoding="utf-8")
         (jdir / "status.txt").write_text("scored", encoding="utf-8")
 
+    # Optional: draft full application for top-N in dry-run
+    drafts_written: list[dict[str, Any]] = []
+    if dry_run and with_drafts > 0 and scored:
+        targets = scored[: with_drafts]
+        log.info("Dry-run: drafting full application for top %d scored postings.", len(targets))
+        for job, _res in targets:
+            try:
+                draft = generate_draft(
+                    fingerprint=job.fingerprint,
+                    settings=settings,
+                    language=settings.default_language,
+                    dry_run=True,
+                )
+                jdir = _job_dir(job, dry_run=True)
+                drafts_written.append({
+                    "title": job.title,
+                    "company": job.company,
+                    "url": job.url,
+                    "dir": str(jdir.relative_to(RUNS_DIR.parent)),
+                    "status": "drafted",
+                })
+            except Exception as e:  # InventionError, LLM failure, render, ...
+                log.warning("Draft failed for %s @ %s: %s", job.title, job.company, e)
+                drafts_written.append({
+                    "title": job.title,
+                    "company": job.company,
+                    "url": job.url,
+                    "dir": "",
+                    "status": f"failed: {type(e).__name__}: {e}",
+                })
+
+    # Dry-run: write a human-readable summary.md at the run-dir root
+    if dry_run:
+        summary_path = _run_dir(dry_run=dry_run) / "summary.md"
+        summary_path.write_text(
+            _render_dry_run_summary(
+                settings=settings,
+                source_counts=source_counts,
+                total_collected=total_collected,
+                thin_dropped=thin_dropped,
+                gate_dropped=gate_dropped,
+                scored=scored,
+                drafts=drafts_written,
+                run_dir=_run_dir(dry_run=True),
+            ),
+            encoding="utf-8",
+        )
+        log.info("Dry-run summary written to %s", summary_path)
+
     return queue_path
+
+
+def _render_dry_run_summary(
+    settings: Settings,
+    source_counts: dict[str, int],
+    total_collected: int,
+    thin_dropped: int,
+    gate_dropped: int,
+    scored: list[tuple[JobPosting, ScoringResult]],
+    drafts: list[dict[str, Any]],
+    run_dir: Path,
+) -> str:
+    lines: list[str] = []
+    lines.append(f"# Dry-run summary — {run_dir.name}")
+    lines.append("")
+    lines.append(
+        f"**LLM chain** : `{settings.llm_provider}/{settings.llm_model}` "
+        f"→ `{settings.llm_fallback_provider}/{settings.llm_fallback_model}`"
+    )
+    lines.append("")
+    lines.append("## Sources scannées")
+    lines.append("")
+    for name, count in source_counts.items():
+        lines.append(f"- **{name}** : {count} offres collectées")
+    lines.append(f"- **total brut** : {total_collected}")
+    lines.append("")
+    lines.append("## Filtrage")
+    lines.append("")
+    lines.append(f"- `{thin_dropped}` offres rejetées (description < {settings.min_jd_words} mots)")
+    lines.append(f"- `{gate_dropped}` offres rejetées (seniority gate)")
+    lines.append(f"- `{len(scored)}` offres scorées et retenues")
+    lines.append("")
+    if scored:
+        lines.append("## Offres scorées")
+        lines.append("")
+        lines.append("| Score | Titre | Entreprise | Lieu | Seniority | Secteur | Source | Postuler |")
+        lines.append("|------:|-------|------------|------|-----------|---------|--------|----------|")
+        for job, res in scored:
+            src = (job.source or "").split(":")[0] or "?"
+            lines.append(
+                f"| {job.score:3d} | {job.title} | {job.company} | "
+                f"{job.location or '—'} | {res.seniority} | {job.sector or '—'} | "
+                f"{src} | [lien]({job.url}) |"
+            )
+        lines.append("")
+        lines.append("### Rationale par offre")
+        lines.append("")
+        for job, res in scored:
+            lines.append(f"- **{job.title} @ {job.company}** (score {job.score}) — {res.rationale}")
+        lines.append("")
+    else:
+        lines.append("## Aucune offre scorée — vérifier les sources / les seuils.")
+        lines.append("")
+    if drafts:
+        lines.append("## CV + lettres rédigés")
+        lines.append("")
+        for d in drafts:
+            if d["status"] == "drafted":
+                lines.append(f"- **{d['title']} @ {d['company']}**")
+                lines.append(f"  - Dossier : `{d['dir']}/`")
+                lines.append(f"  - Fichiers : `positioning.md`, `competencies.md`, "
+                             f"`gap_analysis.md`, `cv_adapted.md`, `cv_adapted.html`, `cover.md`")
+                lines.append(f"  - Page pour postuler : {d['url']}")
+            else:
+                lines.append(f"- **{d['title']} @ {d['company']}** — {d['status']}")
+        lines.append("")
+    else:
+        lines.append("## CV rédigés")
+        lines.append("")
+        lines.append("_Aucun — relance avec `--with-drafts N` pour rédiger les N meilleures offres._")
+        lines.append("")
+    return "\n".join(lines)
 
 
 # ------------------------------------------------------------
@@ -187,6 +329,7 @@ def generate_draft(
     language: str | None = None,
     extra_instructions: str = "",
     strict_no_invention: bool = True,
+    dry_run: bool = False,
 ) -> ApplicationDraft:
     job = _find_job_by_fingerprint(fingerprint)
     master_cv = _load_master_cv(language)
@@ -206,7 +349,7 @@ def generate_draft(
         )
         raise
 
-    jdir = _job_dir(job)
+    jdir = _job_dir(job, dry_run=dry_run)
     (jdir / "positioning.md").write_text(draft.positioning, encoding="utf-8")
     (jdir / "competencies.md").write_text(draft.competencies, encoding="utf-8")
     (jdir / "gap_analysis.md").write_text(draft.gap_analysis, encoding="utf-8")
@@ -227,18 +370,22 @@ def generate_draft(
     except Exception as e:
         log.warning("HTML render failed: %s", e)
 
-    (jdir / "status.txt").write_text("pending_review", encoding="utf-8")
-    add_pending(
-        job.fingerprint,
-        {
-            "job": job.to_dict(),
-            "language": draft.language,
-            "dir": str(jdir),
-            "generated_at": draft.generated_at,
-            "status": "pending_review",
-        },
-        settings,
-    )
+    status = "dry_run_draft" if dry_run else "pending_review"
+    (jdir / "status.txt").write_text(status, encoding="utf-8")
+
+    # In dry_run we do NOT touch the pending state — the draft is disposable.
+    if not dry_run:
+        add_pending(
+            job.fingerprint,
+            {
+                "job": job.to_dict(),
+                "language": draft.language,
+                "dir": str(jdir),
+                "generated_at": draft.generated_at,
+                "status": "pending_review",
+            },
+            settings,
+        )
     log.info("Draft ready: %s", jdir)
     return draft
 
