@@ -1,0 +1,47 @@
+name: daily-search
+
+on:
+  schedule:
+    # 05:45 UTC daily (07:45 Paris summer / 06:45 winter)
+    - cron: "45 5 * * *"
+  workflow_dispatch:
+    inputs:
+      language:
+        description: "Output language (EN or FR)"
+        required: false
+        default: "EN"
+
+permissions:
+  contents: write
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install
+        run: |
+          pip install -r requirements.txt
+          pip install -e .
+      - name: Run search
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LINKEDIN_EMAIL: ${{ secrets.LINKEDIN_EMAIL }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: |
+          python scripts/search_and_score.py -v
+      - name: Commit queue + per-job stubs
+        run: |
+          git config user.name "cv-agent"
+          git config user.email "cv-agent@users.noreply.github.com"
+          git add runs/ data/state/ || true
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "daily-search: scored queue for $(date -u +%F)"
+            git push
+          fi
