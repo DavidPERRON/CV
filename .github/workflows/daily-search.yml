@@ -39,11 +39,27 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
+
+      - name: Secrets sanity check (names only, values never printed)
+        run: |
+          {
+            echo "### Secrets wiring (dry-run debug)"
+            echo ""
+            echo "- ANTHROPIC_API_KEY: $([ -n \"${{ secrets.ANTHROPIC_API_KEY }}\" ] && echo OK || echo MISSING)"
+            echo "- OPENAI_API_KEY:    $([ -n \"${{ secrets.OPENAI_API_KEY }}\" ] && echo OK || echo MISSING)"
+            echo "- LINKEDIN_EMAIL:    $([ -n \"${{ secrets.LINKEDIN_EMAIL }}\" ] && echo OK || echo MISSING)"
+            echo "- GMAIL_APP_PASSWORD:$([ -n \"${{ secrets.GMAIL_APP_PASSWORD }}\" ] && echo OK || echo MISSING)"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Install
         run: |
           pip install -r requirements.txt
           pip install -e .
-      - name: Run search
+
+      - name: Run search (captures stdout+stderr to run.log)
+        id: run_search
+        continue-on-error: true
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -53,6 +69,7 @@ jobs:
           MAX_JOBS: ${{ github.event_name == 'workflow_dispatch' && inputs.max_jobs || '' }}
           WITH_DRAFTS: ${{ github.event_name == 'workflow_dispatch' && inputs.with_drafts || '0' }}
         run: |
+          set +e
           ARGS="-v"
           if [ "$DRY_RUN" = "true" ]; then
             ARGS="$ARGS --dry-run"
@@ -62,35 +79,69 @@ jobs:
             if [ -n "$WITH_DRAFTS" ] && [ "$WITH_DRAFTS" != "0" ]; then
               ARGS="$ARGS --with-drafts $WITH_DRAFTS"
             fi
-            echo "::notice::DRY RUN — no commit, outputs uploaded as artifact"
+            echo "::notice::DRY RUN — args: $ARGS"
           fi
-          python scripts/search_and_score.py $ARGS
+          mkdir -p runs
+          # tee so we have BOTH the live logs AND a copy for the step summary.
+          python -u scripts/search_and_score.py $ARGS 2>&1 | tee runs/run.log
+          EXIT=${PIPESTATUS[0]}
+          echo "exit_code=$EXIT" >> "$GITHUB_OUTPUT"
+          exit $EXIT
 
-      - name: Publish summary.md to the Actions run summary
+      - name: Publish dry-run summary (always runs, self-diagnostic on failure)
         if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.dry_run == 'true' }}
         run: |
-          set -e
-          LATEST=$(ls -1dt runs/_dry-* 2>/dev/null | head -n1 || true)
+          set +e
+          EXIT="${{ steps.run_search.outputs.exit_code }}"
+          {
+            echo ""
+            echo "### cv-search exit code: \`${EXIT:-unknown}\`"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          LATEST=""
+          if ls -1d runs/_dry-* >/dev/null 2>&1; then
+            LATEST=$(ls -1dt runs/_dry-* | head -n1)
+          fi
+
           if [ -n "$LATEST" ] && [ -f "$LATEST/summary.md" ]; then
             cat "$LATEST/summary.md" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "# Dry-run: no summary.md produced" >> "$GITHUB_STEP_SUMMARY"
-            echo "" >> "$GITHUB_STEP_SUMMARY"
-            echo "Check the 'Run search' step logs." >> "$GITHUB_STEP_SUMMARY"
+            {
+              echo "## ⚠️ Pas de summary.md produit"
+              echo ""
+              echo "\`run_search\` n'est pas allé jusqu'au bout. Tail des logs :"
+              echo ""
+              echo '```'
+              tail -n 120 runs/run.log 2>/dev/null || echo "(pas de runs/run.log)"
+              echo '```'
+              echo ""
+              echo "### État du répertoire runs/"
+              echo '```'
+              find runs -maxdepth 3 -type f 2>/dev/null | head -n 60 || echo "(pas de dossier runs/)"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Upload dry-run artifacts
+      - name: Upload dry-run artifacts (runs/ + log, always)
         if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.dry_run == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: dry-run-${{ github.run_id }}
           path: |
             runs/_dry-*/**
+            runs/run.log
           if-no-files-found: warn
           retention-days: 14
 
+      - name: Fail job if run_search failed
+        if: ${{ steps.run_search.outputs.exit_code != '0' && steps.run_search.outputs.exit_code != '' }}
+        run: |
+          echo "::error::cv-search exited with code ${{ steps.run_search.outputs.exit_code }}"
+          exit 1
+
       - name: Commit queue + per-job stubs
-        if: ${{ github.event_name == 'schedule' || inputs.dry_run != 'true' }}
+        if: ${{ (github.event_name == 'schedule' || inputs.dry_run != 'true') && steps.run_search.outputs.exit_code == '0' }}
         run: |
           git config user.name "cv-agent"
           git config user.email "cv-agent@users.noreply.github.com"
