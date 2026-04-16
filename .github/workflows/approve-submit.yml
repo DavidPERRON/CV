@@ -37,6 +37,7 @@ jobs:
       - name: Generate draft
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           python scripts/generate_application.py \
             --fingerprint "${{ github.event.inputs.fingerprint }}" \

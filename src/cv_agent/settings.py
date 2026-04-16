@@ -41,7 +41,8 @@ class Settings:
     # llm
     llm_provider: str = "anthropic"
     llm_model: str = "claude-opus-4-6"
-    llm_fallback_model: str = "claude-sonnet-4-6"
+    llm_fallback_provider: str = "openai"
+    llm_fallback_model: str = "gpt-4o"
     llm_max_output_tokens: int = 8000
     llm_temperature: float = 0.2
     # state
@@ -58,6 +59,7 @@ class Settings:
 
     # secrets (env only)
     anthropic_api_key: str | None = None
+    openai_api_key: str | None = None
     linkedin_email: str | None = None
     gmail_app_password: str | None = None
     imap_host: str = "imap.gmail.com"
@@ -106,6 +108,7 @@ def load_settings() -> Settings:
     llm = cfg.get("llm", {})
     s.llm_provider = str(llm.get("provider", s.llm_provider))
     s.llm_model = str(llm.get("model", s.llm_model))
+    s.llm_fallback_provider = str(llm.get("fallback_provider", s.llm_fallback_provider))
     s.llm_fallback_model = str(llm.get("fallback_model", s.llm_fallback_model))
     s.llm_max_output_tokens = int(llm.get("max_output_tokens", s.llm_max_output_tokens))
     s.llm_temperature = float(llm.get("temperature", s.llm_temperature))
@@ -123,6 +126,7 @@ def load_settings() -> Settings:
 
     # Secrets from env only
     s.anthropic_api_key = os.getenv("ANTHROPIC_API_KEY")
+    s.openai_api_key = os.getenv("OPENAI_API_KEY")
     s.linkedin_email = os.getenv("LINKEDIN_EMAIL")
     s.gmail_app_password = os.getenv("GMAIL_APP_PASSWORD")
     s.imap_host = os.getenv("IMAP_HOST", s.imap_host)
