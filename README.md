@@ -51,6 +51,27 @@ cv-search -v
 
 Affiche les 10 meilleurs matches avec leur `fingerprint`.
 
+#### Smoke test (dry-run)
+
+Pour valider la chaîne (collecte → extraction → LLM Anthropic → fallback OpenAI)
+sans polluer le repo ni le state :
+
+```bash
+cv-search --dry-run --max-jobs 3 -v
+# -> écrit runs/_dry-<UTC stamp>/queue.jsonl
+# -> aucune mutation de data/state/
+```
+
+Côté GitHub Actions, le workflow `daily-search` accepte deux inputs en
+`workflow_dispatch` :
+
+- `dry_run` (`true` par défaut) : passe `--dry-run`, **ne commit rien**
+- `max_jobs` (`3` par défaut) : nombre de postings à traiter
+
+Lance-le depuis **Actions → daily-search → Run workflow** : tu valides
+end-to-end (secrets, install, collecte, LLM) sans toucher au repo. Quand tu es
+prêt pour un vrai run manuel, mets `dry_run` à `false`.
+
 ### 2) Générer la candidature adaptée
 
 ```bash

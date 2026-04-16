@@ -10,6 +10,18 @@ on:
         description: "Output language (EN or FR)"
         required: false
         default: "EN"
+      dry_run:
+        description: "Smoke test: cap to a few postings, no commit, no state mutation"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+      max_jobs:
+        description: "Cap on postings (only used when dry_run=true)"
+        required: false
+        default: "3"
 
 permissions:
   contents: write
@@ -33,9 +45,20 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           LINKEDIN_EMAIL: ${{ secrets.LINKEDIN_EMAIL }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+          MAX_JOBS: ${{ github.event_name == 'workflow_dispatch' && inputs.max_jobs || '' }}
         run: |
-          python scripts/search_and_score.py -v
+          ARGS="-v"
+          if [ "$DRY_RUN" = "true" ]; then
+            ARGS="$ARGS --dry-run"
+            if [ -n "$MAX_JOBS" ]; then
+              ARGS="$ARGS --max-jobs $MAX_JOBS"
+            fi
+            echo "::notice::DRY RUN — no commit, outputs under runs/_dry-*/"
+          fi
+          python scripts/search_and_score.py $ARGS
       - name: Commit queue + per-job stubs
+        if: ${{ github.event_name == 'schedule' || inputs.dry_run != 'true' }}
         run: |
           git config user.name "cv-agent"
           git config user.email "cv-agent@users.noreply.github.com"
