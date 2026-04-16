@@ -55,9 +55,14 @@ extraction:
   user_agent: "Mozilla/5.0 (compatible; cv-agent/0.1; +https://github.com/davidPERRON/CV)"
 
 llm:
+  # Primary provider — used for every call by default.
   provider: anthropic
   model: claude-opus-4-6
-  fallback_model: claude-sonnet-4-6
+  # Fallback used automatically when the primary fails (credit exhaustion,
+  # rate limit, transient 5xx, or malformed JSON). Set to an OpenAI model so
+  # the pipeline keeps running once Anthropic credits are depleted.
+  fallback_provider: openai
+  fallback_model: gpt-4o
   max_output_tokens: 8000
   temperature: 0.2
 

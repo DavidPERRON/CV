@@ -36,11 +36,27 @@ def _configure_logging(verbosity: int) -> None:
 def search_main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Search + score job postings against the master CV.")
     ap.add_argument("-v", action="count", default=1, help="increase verbosity")
+    ap.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Smoke test: cap to --max-jobs postings, write under runs/_dry-<stamp>/, "
+        "skip state mutations. Use to validate the pipeline + LLM fallback without "
+        "polluting the repo.",
+    )
+    ap.add_argument(
+        "--max-jobs",
+        type=int,
+        default=None,
+        help="Override the per-run posting cap (default 3 in --dry-run, "
+        "config value otherwise).",
+    )
     args = ap.parse_args(argv)
     _configure_logging(args.v)
     settings = load_settings()
-    queue_path = run_search(settings)
+    queue_path = run_search(settings, dry_run=args.dry_run, max_jobs=args.max_jobs)
     print(f"OK queue written to {queue_path}")
+    if args.dry_run:
+        print("(dry-run — outputs under runs/_dry-*/, state untouched)")
     # Print a short summary of top 10 from the queue
     with queue_path.open("r", encoding="utf-8") as f:
         rows = [json.loads(ln) for ln in f if ln.strip()]

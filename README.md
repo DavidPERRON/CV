@@ -23,7 +23,8 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -e .
 playwright install chromium
 cp .env.example .env
-# remplir ANTHROPIC_API_KEY, LINKEDIN_EMAIL, GMAIL_APP_PASSWORD
+# remplir ANTHROPIC_API_KEY (primaire), OPENAI_API_KEY (fallback 1),
+# LINKEDIN_EMAIL, GMAIL_APP_PASSWORD
 ```
 
 ## Fichiers à fournir
@@ -49,6 +50,27 @@ cv-search -v
 ```
 
 Affiche les 10 meilleurs matches avec leur `fingerprint`.
+
+#### Smoke test (dry-run)
+
+Pour valider la chaîne (collecte → extraction → LLM Anthropic → fallback OpenAI)
+sans polluer le repo ni le state :
+
+```bash
+cv-search --dry-run --max-jobs 3 -v
+# -> écrit runs/_dry-<UTC stamp>/queue.jsonl
+# -> aucune mutation de data/state/
+```
+
+Côté GitHub Actions, le workflow `daily-search` accepte deux inputs en
+`workflow_dispatch` :
+
+- `dry_run` (`true` par défaut) : passe `--dry-run`, **ne commit rien**
+- `max_jobs` (`3` par défaut) : nombre de postings à traiter
+
+Lance-le depuis **Actions → daily-search → Run workflow** : tu valides
+end-to-end (secrets, install, collecte, LLM) sans toucher au repo. Quand tu es
+prêt pour un vrai run manuel, mets `dry_run` à `false`.
 
 ### 2) Générer la candidature adaptée
 
@@ -98,6 +120,27 @@ cv-reject --fingerprint <fp> --reason "scope too junior"
 
 Archive la fingerprint dans `data/state/applied_jobs.json` avec la raison,
 empêche de la re-découvrir.
+
+## LLM : chaîne de fallback
+
+Le pipeline appelle d'abord **Anthropic** (`claude-opus-4-6` par défaut). Si
+l'appel échoue (crédits épuisés, rate limit, 5xx, JSON malformé), il bascule
+automatiquement sur **OpenAI** (`gpt-4o` par défaut) — sans intervention.
+
+Configurer dans `config/jobs.yaml` :
+
+```yaml
+llm:
+  provider: anthropic
+  model: claude-opus-4-6
+  fallback_provider: openai
+  fallback_model: gpt-4o
+```
+
+Les deux clés (`ANTHROPIC_API_KEY` et `OPENAI_API_KEY`) doivent être présentes
+dans `.env` (et dans les secrets GitHub Actions) pour que le fallback soit
+utilisable. Si seule la clé Anthropic est définie, le pipeline tournera mais
+plantera explicitement le jour où Anthropic refusera l'appel.
 
 ## Sécurité
 

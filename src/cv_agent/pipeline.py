@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -54,19 +55,29 @@ def _load_master_cv(language: str | None = None) -> str:
     )
 
 
-def _run_dir() -> Path:
+def _run_dir(dry_run: bool = False) -> Path:
+    if dry_run:
+        stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%SZ")
+        return ensure_dir(RUNS_DIR / f"_dry-{stamp}")
     return ensure_dir(RUNS_DIR / today_iso())
 
 
-def _job_dir(job: JobPosting) -> Path:
+def _job_dir(job: JobPosting, dry_run: bool = False) -> Path:
     slug = job.slug or slugify(f"{job.company}_{job.title}")
-    return ensure_dir(_run_dir() / slug)
+    return ensure_dir(_run_dir(dry_run=dry_run) / slug)
 
 
 # ------------------------------------------------------------
 # 1. Search + score
 # ------------------------------------------------------------
-def run_search(settings: Settings) -> Path:
+def run_search(settings: Settings, dry_run: bool = False, max_jobs: int | None = None) -> Path:
+    """Collect, extract, score postings.
+
+    dry_run=True:
+      - cap to `max_jobs` postings (default 3) to spare API budget
+      - write outputs under runs/_dry-<utc-stamp>/ instead of runs/<date>/
+      - skip any state mutation (no fingerprints recorded as 'applied/known')
+    """
     sources = settings.load_sources()
     log.info("Loading master CV...")
     master_cv = _load_master_cv()
@@ -81,10 +92,13 @@ def run_search(settings: Settings) -> Path:
     log.info("Collecting career pages...")
     postings += collect_career_pages(sources, settings)
 
-    # Dedup vs already-applied
+    # Dedup vs already-applied (skipped in dry_run so the test stays repeatable)
     before = len(postings)
-    postings = [p for p in postings if not is_known(p.fingerprint)]
-    log.info("Dedup: %d -> %d after removing known fingerprints.", before, len(postings))
+    if not dry_run:
+        postings = [p for p in postings if not is_known(p.fingerprint)]
+        log.info("Dedup: %d -> %d after removing known fingerprints.", before, len(postings))
+    else:
+        log.info("Dry-run: skipping known-fingerprint dedup (kept %d).", before)
 
     # Exclude explicitly blocked companies
     excl = {c.strip().lower() for c in settings.excluded_companies if c.strip()}
@@ -92,7 +106,12 @@ def run_search(settings: Settings) -> Path:
         postings = [p for p in postings if p.company.strip().lower() not in excl]
 
     # Cap
-    postings = postings[: settings.max_jobs_per_run]
+    cap = (max_jobs if dry_run else settings.max_jobs_per_run)
+    if dry_run and cap is None:
+        cap = 3
+    postings = postings[: cap]
+    if dry_run:
+        log.info("Dry-run: capped to %d postings.", len(postings))
 
     # Extract full JD in parallel
     log.info("Extracting full JDs for %d postings...", len(postings))
@@ -124,7 +143,7 @@ def run_search(settings: Settings) -> Path:
     scored.sort(key=lambda pr: pr[0].score, reverse=True)
 
     # Persist queue
-    queue_path = _run_dir() / "queue.jsonl"
+    queue_path = _run_dir(dry_run=dry_run) / "queue.jsonl"
     with queue_path.open("w", encoding="utf-8") as f:
         for job, res in scored:
             f.write(json.dumps({
@@ -141,11 +160,12 @@ def run_search(settings: Settings) -> Path:
             }, ensure_ascii=False) + "\n")
     log.info("Wrote %d scored postings to %s", len(scored), queue_path)
 
-    # Persist per-job stubs for those above mid_threshold
+    # Persist per-job stubs for those above mid_threshold (dry-run: keep all of them).
+    threshold = 0 if dry_run else settings.mid_threshold
     for job, res in scored:
-        if job.score < settings.mid_threshold:
+        if job.score < threshold:
             continue
-        jdir = _job_dir(job)
+        jdir = _job_dir(job, dry_run=dry_run)
         (jdir / "job.json").write_text(json.dumps(job.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
         (jdir / "scoring.json").write_text(json.dumps({
             "seniority": res.seniority,
