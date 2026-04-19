@@ -145,10 +145,80 @@ jobs:
         run: |
           git config user.name "cv-agent"
           git config user.email "cv-agent@users.noreply.github.com"
-          git add runs/ data/state/ || true
+          git add -f runs/ data/state/ || true
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
             git commit -m "daily-search: scored queue for $(date -u +%F)"
             git push
           fi
+
+      - name: Format results for email
+        if: ${{ (github.event_name == 'schedule' || inputs.dry_run != 'true') && steps.run_search.outputs.exit_code == '0' }}
+        id: format_email
+        run: |
+          python3 - <<'EOF'
+          import json, os, sys
+          from pathlib import Path
+          from datetime import datetime, timezone
+
+          today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+          queue_path = Path(f"runs/{today}/queue.jsonl")
+
+          if not queue_path.exists():
+              body = f"CV Agent — {today}\n\nAucune offre trouvée (queue.jsonl absent)."
+              Path("/tmp/email_body.txt").write_text(body)
+              with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+                  f.write("count=0\n")
+                  f.write(f"subject=CV Agent — 0 offre le {today}\n")
+              sys.exit(0)
+
+          jobs = [json.loads(l) for l in queue_path.read_text().splitlines() if l.strip()]
+          top = [j for j in jobs if j.get("score", 0) >= 80]
+          mid = [j for j in jobs if 60 <= j.get("score", 0) < 80]
+
+          lines = [
+              f"CV Agent — Résultats du {today}",
+              f"{len(jobs)} offre(s) analysée(s)\n",
+          ]
+
+          if top:
+              lines.append("=== TOP MATCHES (score ≥ 80) ===\n")
+              for j in top:
+                  lines.append(f"★  {j.get('company','?')} — {j.get('title','?')}")
+                  lines.append(f"   Score       : {j.get('score','?')}/100")
+                  lines.append(f"   URL         : {j.get('url','')}")
+                  lines.append(f"   Fingerprint : {j.get('fingerprint','')}")
+                  lines.append(f"   Commande    : cv-generate --fingerprint {j.get('fingerprint','')}\n")
+
+          if mid:
+              lines.append("=== OFFRES INTÉRESSANTES (score 60–79) ===\n")
+              for j in mid:
+                  lines.append(f"◆  {j.get('company','?')} — {j.get('title','?')}")
+                  lines.append(f"   Score       : {j.get('score','?')}/100")
+                  lines.append(f"   URL         : {j.get('url','')}")
+                  lines.append(f"   Fingerprint : {j.get('fingerprint','')}\n")
+
+          if not top and not mid:
+              lines.append("Aucune offre avec un score ≥ 60 aujourd'hui.\n")
+
+          lines.append(f"Voir tous les résultats : https://github.com/davidperron/cv/tree/main/runs/{today}")
+
+          Path("/tmp/email_body.txt").write_text("\n".join(lines))
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"count={len(jobs)}\n")
+              f.write(f"subject=CV Agent — {len(jobs)} offre(s) le {today}\n")
+          EOF
+
+      - name: Send email notification
+        if: ${{ (github.event_name == 'schedule' || inputs.dry_run != 'true') && steps.run_search.outputs.exit_code == '0' }}
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.LINKEDIN_EMAIL }}
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          subject: ${{ steps.format_email.outputs.subject }}
+          to: david.perron@gmx.fr
+          from: CV Agent <${{ secrets.LINKEDIN_EMAIL }}>
+          body: file:///tmp/email_body.txt
