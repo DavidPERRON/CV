@@ -1,0 +1,6 @@
+{
+  "seniority": "senior",
+  "fit_score": 62,
+  "sector": "banking",
+  "rationale": "The candidate has direct Barclays experience (7 years) and strong trade finance/AML/KYC compliance background, which aligns with the financial crime and regulated environment aspects. However, the role is fundamentally a data science/analytics position requiring hands-on TM system tuning, statistical/ML model development, and coding skills (SQL, Python, Spark, Scala). The candidate's CV shows no direct transaction monitoring, surveillance system, or data science experience. His recent AI executive master is tangential but not equivalent to hands-on model building. The AVP title at Barclays is typically mid-to-senior, but the scope described (team leadership, policy development, complex stakeholder management) fits his seniority. Geography (Glasgow) is acceptable per UK preference. Strong sector match but significant functional gap in core technical/data science requirements."
+}
