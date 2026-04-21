@@ -1,13 +1,11 @@
 name: deploy-pages
 
 on:
-  # After each successful daily-search run — pick up new reports automatically
   workflow_run:
     workflows: ["daily-search"]
     types: [completed]
     branches: [main]
 
-  # Also triggered on direct pushes to main (new code, config, or site changes)
   push:
     branches: [main]
     paths:
@@ -15,7 +13,6 @@ on:
       - "runs/**"
       - "src/cv_agent/render/templates/**"
 
-  # Manual trigger for testing or forced deploys
   workflow_dispatch:
 
 permissions:
@@ -23,7 +20,6 @@ permissions:
 
 jobs:
   deploy:
-    # Only deploy when the triggering workflow succeeded (or if triggered manually/by push)
     if: >
       github.event_name != 'workflow_run' ||
       github.event.workflow_run.conclusion == 'success'
@@ -46,16 +42,13 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
         run: |
           PROJECT="${CLOUDFLARE_PROJECT_NAME:-ashcroftedition}"
           # Create project if it does not exist yet (idempotent)
           npx wrangler@latest pages project create "$PROJECT" \
-            --production-branch=main 2>&1 | grep -v 'already exists' || true
+            --production-branch=main 2>&1 || true
           # Deploy
           npx wrangler@latest pages deploy dist \
             --project-name="$PROJECT" \
             --commit-dirty=true
-        env:
-          CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
