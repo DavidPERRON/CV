@@ -1,12 +1,12 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "cv",
+  "name": "ashcroftedition",
   "compatibility_date": "2026-04-21",
   "observability": {
     "enabled": true
   },
   "assets": {
-    "directory": "public"
+    "directory": "dist"
   },
   "compatibility_flags": [
     "nodejs_compat"

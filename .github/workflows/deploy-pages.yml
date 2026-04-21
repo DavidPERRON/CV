@@ -1,18 +1,22 @@
 name: deploy-pages
 
 on:
+  # After each successful daily-search run — pick up new reports automatically
   workflow_run:
     workflows: ["daily-search"]
     types: [completed]
     branches: [main]
 
+  # Also triggered on direct pushes to main (new code, config, or site changes)
   push:
     branches: [main]
     paths:
       - "public/**"
       - "runs/**"
       - "src/cv_agent/render/templates/**"
+      - "wrangler.jsonc"
 
+  # Manual trigger for testing or forced deploys
   workflow_dispatch:
 
 permissions:
@@ -20,6 +24,7 @@ permissions:
 
 jobs:
   deploy:
+    # Only deploy when the triggering workflow succeeded (or if triggered manually/by push)
     if: >
       github.event_name != 'workflow_run' ||
       github.event.workflow_run.conclusion == 'success'
@@ -31,24 +36,17 @@ jobs:
       - name: Build deploy bundle
         run: |
           mkdir -p dist
+          # Personal site at root
           cp -r public/. dist/
+          # Job reports under /runs/
           if [ -d runs ]; then
             cp -r runs dist/runs
           fi
           echo "dist/ contents:"
           find dist -maxdepth 3 -type f | head -40
 
-      - name: Deploy to Cloudflare Pages
+      - name: Deploy to Cloudflare Workers (static assets)
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
-        run: |
-          PROJECT="${CLOUDFLARE_PROJECT_NAME:-ashcroftedition}"
-          # Create project if it does not exist yet (idempotent)
-          npx wrangler@latest pages project create "$PROJECT" \
-            --production-branch=main 2>&1 || true
-          # Deploy
-          npx wrangler@latest pages deploy dist \
-            --project-name="$PROJECT" \
-            --commit-dirty=true
+        run: npx wrangler@latest deploy
