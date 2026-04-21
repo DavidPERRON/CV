@@ -1,22 +1,18 @@
 name: deploy-pages
 
 on:
-  # After each successful daily-search run — pick up new reports automatically
   workflow_run:
     workflows: ["daily-search"]
     types: [completed]
     branches: [main]
 
-  # Also triggered on direct pushes to main (new code, config, or site changes)
   push:
     branches: [main]
     paths:
       - "public/**"
       - "runs/**"
-      - "src/cv_agent/render/templates/**"
       - "wrangler.jsonc"
 
-  # Manual trigger for testing or forced deploys
   workflow_dispatch:
 
 permissions:
@@ -24,7 +20,6 @@ permissions:
 
 jobs:
   deploy:
-    # Only deploy when the triggering workflow succeeded (or if triggered manually/by push)
     if: >
       github.event_name != 'workflow_run' ||
       github.event.workflow_run.conclusion == 'success'
@@ -36,17 +31,17 @@ jobs:
       - name: Build deploy bundle
         run: |
           mkdir -p dist
-          # Personal site at root
           cp -r public/. dist/
-          # Job reports under /runs/
-          if [ -d runs ]; then
-            cp -r runs dist/runs
-          fi
-          echo "dist/ contents:"
+          if [ -d runs ]; then cp -r runs dist/runs; fi
+          echo "=== dist/ ==="
           find dist -maxdepth 3 -type f | head -40
 
-      - name: Deploy to Cloudflare Workers (static assets)
+      - name: Deploy to Cloudflare Workers
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx wrangler@latest deploy
+        run: |
+          echo "Account ID set: ${{ secrets.CLOUDFLARE_ACCOUNT_ID != '' }}"
+          echo "Token set:      ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}"
+          npx wrangler@latest --version
+          npx wrangler@latest deploy --verbose 2>&1
