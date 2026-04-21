@@ -35,9 +35,7 @@ jobs:
       - name: Build deploy bundle
         run: |
           mkdir -p dist
-          # Personal site at root
           cp -r public/. dist/
-          # Job reports under /runs/ (committed to repo by daily-search)
           if [ -d runs ]; then
             cp -r runs dist/runs
           fi
@@ -49,7 +47,15 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          PROJECT="${{ secrets.CLOUDFLARE_PROJECT_NAME || 'ashcroftedition' }}"
+          PROJECT="${CLOUDFLARE_PROJECT_NAME:-ashcroftedition}"
+          # Create project if it does not exist yet (idempotent)
+          npx wrangler@latest pages project create "$PROJECT" \
+            --production-branch=main 2>&1 | grep -v 'already exists' || true
+          # Deploy
           npx wrangler@latest pages deploy dist \
             --project-name="$PROJECT" \
             --commit-dirty=true
+        env:
+          CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
