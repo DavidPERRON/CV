@@ -140,9 +140,14 @@ def run_search(
         text = jds.get(p.url, "") or p.description
         p.description = text
 
-    # Drop thin descriptions
+    # Drop thin descriptions — but never drop LinkedIn email postings: their JD
+    # can't be scraped (login wall) so we score on title + company alone.
     before_thin = len(postings)
-    postings = [p for p in postings if word_count(p.description) >= settings.min_jd_words]
+    postings = [
+        p for p in postings
+        if word_count(p.description) >= settings.min_jd_words
+        or p.source.startswith("linkedin_email:")
+    ]
     thin_dropped = before_thin - len(postings)
     log.info("After min_jd_words filter: %d postings (%d thin).", len(postings), thin_dropped)
 

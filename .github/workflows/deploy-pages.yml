@@ -1,0 +1,54 @@
+name: deploy-pages
+
+on:
+  # After each successful daily-search run — pick up new reports automatically
+  workflow_run:
+    workflows: ["daily-search"]
+    types: [completed]
+    branches: [main]
+
+  # Also triggered on direct pushes to main (new code, config, or site changes)
+  push:
+    branches: [main]
+    paths:
+      - "public/**"
+      - "runs/**"
+      - "src/cv_agent/render/templates/**"
+
+  # Manual trigger for testing or forced deploys
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    # Only deploy when the triggering workflow succeeded (or if triggered manually/by push)
+    if: >
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build deploy bundle
+        run: |
+          mkdir -p dist
+          # Personal site at root
+          cp -r public/. dist/
+          # Job reports under /runs/ (committed to repo by daily-search)
+          if [ -d runs ]; then
+            cp -r runs dist/runs
+          fi
+          echo "dist/ contents:"
+          find dist -maxdepth 3 -type f | head -40
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: ${{ secrets.CLOUDFLARE_PROJECT_NAME || 'ashcroftedition' }}
+          directory: dist
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
