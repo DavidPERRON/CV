@@ -64,6 +64,9 @@ class Settings:
     gmail_app_password: str | None = None
     imap_host: str = "imap.gmail.com"
     imap_folder: str = "INBOX"
+    # secondary inbox (AequitasConsultus account that also receives LinkedIn alerts)
+    aequitas_email: str | None = None
+    aequitas_app_password: str | None = None
 
     def load_sources(self) -> dict[str, Any]:
         if not self.sources_file.exists():
@@ -131,5 +134,7 @@ def load_settings() -> Settings:
     s.gmail_app_password = os.getenv("GMAIL_APP_PASSWORD")
     s.imap_host = os.getenv("IMAP_HOST", s.imap_host)
     s.imap_folder = os.getenv("IMAP_FOLDER", s.imap_folder)
+    s.aequitas_email = os.getenv("AEQUITAS_EMAIL")
+    s.aequitas_app_password = os.getenv("AEQUITAS_APP_PASSWORD")
 
     return s

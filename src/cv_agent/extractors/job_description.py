@@ -2,10 +2,15 @@
 
 Stack inspired by ai_press_review.extractors.web_content:
 trafilatura (best for long-form content) -> BeautifulSoup fallback.
+
+LinkedIn URLs are explicitly skipped — the platform blocks unauthenticated
+scraping (redirects to login). Returning "" lets the pipeline fall back to
+the email-parsed title/company as the description.
 """
 from __future__ import annotations
 
 import logging
+import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import lru_cache
 from typing import Iterable
@@ -18,6 +23,8 @@ from ..settings import Settings
 from ..utils import word_count
 
 log = logging.getLogger(__name__)
+
+_LINKEDIN_URL_RE = re.compile(r"linkedin\.com/jobs/")
 
 
 @retry(stop=stop_after_attempt(3), wait=wait_fixed(2), reraise=True)
@@ -70,7 +77,14 @@ def extract_job_description(url: str, settings: Settings) -> str:
 
     Returns empty string on any failure. The caller decides whether to keep
     the posting (`min_jd_words` threshold).
+
+    LinkedIn URLs are skipped — they redirect to a login wall without auth.
+    The pipeline keeps the short email-extracted snippet as description and
+    bypasses the min_jd_words filter for linkedin_email sources.
     """
+    if _LINKEDIN_URL_RE.search(url):
+        log.debug("Skipping LinkedIn URL (requires auth): %s", url)
+        return ""
     try:
         html = _cached_fetch(url, settings.user_agent, settings.extraction_timeout)
     except Exception as e:

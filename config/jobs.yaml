@@ -3,10 +3,10 @@
 scoring:
   top_threshold: 80       # top-tier match, auto-generate application
   mid_threshold: 60       # generate only with --force
-  min_jd_words: 300       # discard postings with too-thin descriptions
+  min_jd_words: 80        # discard thin descriptions (80 allows LinkedIn email snippets through)
 
 search:
-  max_jobs_per_run: 30
+  max_jobs_per_run: 60    # increased — process more postings per daily run
   max_docs_generated: 10
   default_language: EN
   preferred_roles:
@@ -15,12 +15,19 @@ search:
     - "Director"
     - "VP"
     - "Chief"
+    - "Global Head"
+    - "Country Head"
+    - "Product Director"
+    - "Partner"
   preferred_sectors:
     - banking
     - corporate banking
     - transaction banking
+    - trade finance
+    - working capital
     - applied AI
     - enterprise software
+    - fintech
   preferred_geographies:
     - France
     - United Kingdom
@@ -34,7 +41,9 @@ search:
     - Canada
   target_companies: []
   excluded_companies: []
-  # Seniority filter: any of these tokens in the title discards the posting.
+  # Seniority hard-filter: any of these tokens as a whole word in the title discards the posting.
+  # Kept narrow — "analyst" and "associate" removed because senior roles (e.g. "VP, Trade Analysis")
+  # often carry these words in a subsidiary context.
   junior_title_blocklist:
     - intern
     - internship
@@ -45,10 +54,7 @@ search:
     - graduate
     - junior
     - entry level
-    - associate
-    - analyst
     - trainee
-    - assistant
 
 extraction:
   timeout_seconds: 20
