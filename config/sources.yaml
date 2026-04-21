@@ -18,11 +18,24 @@ job_boards:
       url: https://ca.indeed.com/rss?q=%22director%22+OR+%22vp%22&l=Canada
     - name: eFinancialCareers — Director+ EMEA
       url: https://www.efinancialcareers.com/rss/search?q=director&l=Europe
+    - name: eFinancialCareers — Trade Finance VP+
+      url: https://www.efinancialcareers.com/rss/search?q=trade+finance+vp&l=Europe
+    - name: eFinancialCareers — Working Capital Director
+      url: https://www.efinancialcareers.com/rss/search?q=working+capital+director&l=Europe
+    - name: eFinancialCareers — Head of Trade Finance
+      url: https://www.efinancialcareers.com/rss/search?q=head+of+trade+finance
+    - name: eFinancialCareers — Transaction Banking VP
+      url: https://www.efinancialcareers.com/rss/search?q=transaction+banking&l=Europe
+    - name: Indeed — VP Trade Finance Europe
+      url: https://fr.indeed.com/rss?q=vp+trade+finance&l=Europe
+    - name: Indeed — Head of Product Fintech France
+      url: https://fr.indeed.com/rss?q=head+of+product+fintech&l=France
   email:
+    # Single broad LinkedIn filter — catches all alert types (job alert, digest, "jobs for you")
+    # URL regex in the collector ensures only actual job-posting links are extracted.
     - name: LinkedIn Job Alerts
       mailbox: INBOX
-      from_contains: jobs-noreply@linkedin.com
-      subject_contains: "Job alert"
+      from_contains: linkedin.com
     - name: Welcome to the Jungle alerts
       mailbox: INBOX
       from_contains: welcometothejungle.com
@@ -47,13 +60,13 @@ executive_search:
       link_selector: 'a[href*="/jobs/"]'
     - name: Russell Reynolds Associates
       url: https://www.russellreynolds.com/en/careers
-      link_selector: 'a[href*="/careers/"]'
+      link_selector: 'a[href*="/opportunities/"]'
     - name: Korn Ferry — executive opportunities
       url: https://www.kornferry.com/careers
       link_selector: 'a[href*="/opportunity/"]'
     - name: Odgers Berndtson — opportunities
-      url: https://www.odgersberndtson.com/en-gb/careers
-      link_selector: 'a[href*="/opportunities/"]'
+      url: https://www.odgersberndtson.com/en-gb/roles
+      link_selector: 'a[href*="/roles/"]'
     - name: Amrop
       url: https://www.amrop.com/careers
       link_selector: 'a[href*="/career/"]'

@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="David Perron — Senior Finance Executive specialising in Trade Finance, Working Capital, Corporate Banking and Applied AI. Founder of Aequitas Consultus.">
+  <title>David Perron — Senior Finance Executive | AI</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0c0e16;
+      --surface: #131620;
+      --card:    #1a1d2b;
+      --border:  #252838;
+      --text:    #e2e8f0;
+      --muted:   #8892a4;
+      --accent:  #6366f1;
+      --accent2: #818cf8;
+      --green:   #22c55e;
+      --gold:    #eab308;
+      --font:    -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      --mono:    "SFMono-Regular", "Menlo", monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    a { color: var(--accent2); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Nav ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(12,14,22,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      display: flex; align-items: center; gap: 0; height: 56px;
+    }
+    .nav-brand {
+      font-weight: 700; font-size: 16px; color: #fff;
+      letter-spacing: -0.3px; margin-right: auto;
+    }
+    .nav-links { display: flex; gap: 4px; }
+    .nav-links a {
+      color: var(--muted); font-size: 13px; padding: 6px 12px;
+      border-radius: 6px; transition: all .15s;
+    }
+    .nav-links a:hover { color: #fff; background: rgba(255,255,255,.06); text-decoration: none; }
+    .nav-cta {
+      background: var(--accent); color: #fff !important;
+      border-radius: 6px; padding: 6px 14px; font-size: 13px;
+      font-weight: 600; margin-left: 8px; transition: background .15s;
+    }
+    .nav-cta:hover { background: #4f46e5 !important; text-decoration: none !important; }
+
+    /* ── Section layout ── */
+    section { padding: 80px 24px; max-width: 960px; margin: 0 auto; }
+    section + section { padding-top: 0; }
+
+    /* ── Hero ── */
+    #hero {
+      padding: 100px 24px 72px;
+      max-width: 960px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr auto; gap: 48px; align-items: center;
+    }
+    .hero-eyebrow {
+      font-size: 12px; font-weight: 600; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--accent2);
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-size: clamp(32px, 5vw, 52px); font-weight: 800;
+      color: #fff; line-height: 1.15; letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+    .hero-subtitle {
+      font-size: 18px; color: var(--muted); font-weight: 400;
+      margin-bottom: 24px; max-width: 520px;
+    }
+    .hero-tags {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px;
+    }
+    .hero-tag {
+      font-size: 12px; padding: 4px 10px;
+      border-radius: 4px; font-weight: 500;
+      background: rgba(99,102,241,.12); color: var(--accent2);
+      border: 1px solid rgba(99,102,241,.25);
+    }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--accent); color: #fff; font-weight: 600;
+      padding: 10px 20px; border-radius: 8px; font-size: 14px;
+      transition: background .15s;
+    }
+    .btn-primary:hover { background: #4f46e5; text-decoration: none; }
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,.06); color: var(--text);
+      border: 1px solid var(--border); font-weight: 500;
+      padding: 10px 20px; border-radius: 8px; font-size: 14px;
+      transition: all .15s;
+    }
+    .btn-secondary:hover { border-color: #3a3d50; text-decoration: none; background: rgba(255,255,255,.1); }
+    .hero-avatar {
+      width: 160px; height: 160px; border-radius: 16px;
+      background: linear-gradient(135deg, #1a1d2b 0%, #252838 100%);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 64px; flex-shrink: 0;
+    }
+
+    /* ── Section title ── */
+    .section-label {
+      font-size: 11px; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--accent2);
+      margin-bottom: 8px;
+    }
+    .section-title {
+      font-size: 26px; font-weight: 700; color: #fff;
+      letter-spacing: -0.3px; margin-bottom: 32px;
+    }
+
+    /* ── Stats ── */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px; margin-bottom: 0;
+    }
+    .stat-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px 24px;
+    }
+    .stat-num {
+      font-size: 32px; font-weight: 800; color: #fff;
+      line-height: 1; margin-bottom: 6px;
+    }
+    .stat-num.accent  { color: var(--accent2); }
+    .stat-num.green   { color: var(--green); }
+    .stat-num.gold    { color: var(--gold); }
+    .stat-label { font-size: 12px; color: var(--muted); }
+
+    /* ── Expertise ── */
+    .skills-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+    .skill-chip {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 16px;
+      font-size: 13px; color: var(--text);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .skill-chip .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent2); flex-shrink: 0;
+    }
+
+    /* ── Timeline ── */
+    .timeline { position: relative; padding-left: 24px; }
+    .timeline::before {
+      content: ""; position: absolute; left: 0; top: 8px; bottom: 8px;
+      width: 1px; background: var(--border);
+    }
+    .tl-item {
+      position: relative; margin-bottom: 36px;
+    }
+    .tl-item::before {
+      content: ""; position: absolute; left: -28px; top: 7px;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent); border: 2px solid var(--bg);
+    }
+    .tl-header {
+      display: flex; align-items: flex-start; gap: 12px;
+      flex-wrap: wrap; margin-bottom: 8px;
+    }
+    .tl-title { font-size: 16px; font-weight: 600; color: #fff; }
+    .tl-company { font-size: 14px; color: var(--accent2); font-weight: 500; }
+    .tl-period {
+      margin-left: auto; font-size: 12px; color: var(--muted);
+      background: rgba(255,255,255,.04); border: 1px solid var(--border);
+      border-radius: 4px; padding: 2px 8px; white-space: nowrap;
+    }
+    .tl-location { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .tl-body { font-size: 14px; color: var(--muted); }
+    .tl-body ul { padding-left: 16px; }
+    .tl-body li { margin-bottom: 4px; }
+    .tl-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(234,179,8,.1); color: var(--gold);
+      border: 1px solid rgba(234,179,8,.25); border-radius: 4px;
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      margin-top: 8px;
+    }
+
+    /* ── Education ── */
+    .edu-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+    }
+    .edu-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px 22px;
+    }
+    .edu-degree { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+    .edu-school { font-size: 13px; color: var(--accent2); margin-bottom: 6px; }
+    .edu-year { font-size: 12px; color: var(--muted); }
+    .edu-thesis { font-size: 12px; color: var(--muted); margin-top: 8px; font-style: italic; }
+
+    /* ── Dashboard CTA ── */
+    .dashboard-card {
+      background: linear-gradient(135deg, rgba(99,102,241,.12) 0%, rgba(99,102,241,.04) 100%);
+      border: 1px solid rgba(99,102,241,.3);
+      border-radius: 16px; padding: 40px 48px;
+      display: flex; align-items: center; gap: 40px; flex-wrap: wrap;
+    }
+    .dashboard-card h3 { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+    .dashboard-card p { font-size: 14px; color: var(--muted); max-width: 420px; }
+    .dashboard-stats {
+      display: flex; gap: 24px; margin-top: 16px;
+    }
+    .ds { text-align: center; }
+    .ds-num { font-size: 22px; font-weight: 800; color: var(--accent2); }
+    .ds-lbl { font-size: 11px; color: var(--muted); }
+
+    /* ── Engagement / Civic ── */
+    .engage-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+    }
+    .engage-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px 22px;
+    }
+    .engage-title { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+    .engage-body { font-size: 13px; color: var(--muted); }
+
+    /* ── Podcast ── */
+    .podcast-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 32px 36px;
+      display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap;
+    }
+    .podcast-icon { font-size: 48px; line-height: 1; }
+    .podcast-title { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+    .podcast-desc { font-size: 14px; color: var(--muted); max-width: 540px; }
+    .podcast-links { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+
+    /* ── Contact ── */
+    .contact-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .contact-item {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px 20px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .contact-icon { font-size: 20px; }
+    .contact-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+    .contact-value { font-size: 14px; font-weight: 500; color: var(--text); }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 24px 32px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 12px;
+      font-size: 12px; color: var(--muted);
+      max-width: 960px; margin: 0 auto;
+    }
+
+    /* ── Divider ── */
+    .divider { height: 1px; background: var(--border); margin: 0 24px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 700px) {
+      #hero { grid-template-columns: 1fr; }
+      .hero-avatar { display: none; }
+      nav { padding: 0 16px; }
+      .nav-links a:not(.nav-cta) { display: none; }
+      section { padding: 48px 16px; }
+      .dashboard-card { padding: 24px; }
+      .podcast-card { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<nav>
+  <div class="nav-brand">David Perron</div>
+  <div class="nav-links">
+    <a href="#about">About</a>
+    <a href="#experience">Experience</a>
+    <a href="#education">Education</a>
+    <a href="#podcast">Podcast</a>
+    <a href="#contact">Contact</a>
+    <a href="/runs/index.html" class="nav-cta">📊 Job Dashboard</a>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<div id="hero">
+  <div>
+    <div class="hero-eyebrow">Paris, France · Available for senior mandates</div>
+    <h1>David Perron</h1>
+    <div class="hero-subtitle">
+      Senior Finance Executive — Trade Finance, Working Capital &amp; Applied AI
+    </div>
+    <div class="hero-tags">
+      <span class="hero-tag">Trade Finance</span>
+      <span class="hero-tag">Working Capital</span>
+      <span class="hero-tag">Corporate Banking</span>
+      <span class="hero-tag">Applied AI</span>
+      <span class="hero-tag">P&amp;L Leadership</span>
+      <span class="hero-tag">Fintech Partnership</span>
+    </div>
+    <div class="hero-actions">
+      <a href="mailto:david.perron@gmx.fr" class="btn-primary">✉ Contact</a>
+      <a href="https://www.linkedin.com/in/davidperron" target="_blank" rel="noopener" class="btn-secondary">LinkedIn ↗</a>
+      <a href="/runs/index.html" class="btn-secondary">📊 Job Dashboard</a>
+    </div>
+  </div>
+  <div class="hero-avatar">👔</div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ── Stats ── -->
+<section id="about">
+  <div class="section-label">At a glance</div>
+  <div class="section-title">20+ years building revenue in global banking</div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-num accent">20+</div>
+      <div class="stat-label">Years in corporate &amp; transaction banking</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num green">6×</div>
+      <div class="stat-label">Revenue growth built at JPMorgan in 4 years</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num accent">€3B</div>
+      <div class="stat-label">Trade &amp; WC portfolio managed at Barclays</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num gold">🏆</div>
+      <div class="stat-label">Adam Smith Award 2021 — Best SCF Deal (ESG)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num accent">5</div>
+      <div class="stat-label">Countries covered (FR · IT · BE · LU · NL)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num green">2025</div>
+      <div class="stat-label">Executive Master in AI — Institut Mines-Télécom</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Expertise ── -->
+<section id="expertise">
+  <div class="section-label">Core expertise</div>
+  <div class="section-title">What I bring to the table</div>
+  <div class="skills-grid">
+    <div class="skill-chip"><span class="dot"></span>Trade Finance &amp; Supply Chain Finance</div>
+    <div class="skill-chip"><span class="dot"></span>Working Capital Optimization</div>
+    <div class="skill-chip"><span class="dot"></span>Structured Transactions (SCF, Receivables)</div>
+    <div class="skill-chip"><span class="dot"></span>Letters of Credit &amp; Bank Guarantees</div>
+    <div class="skill-chip"><span class="dot"></span>P&amp;L Management &amp; Revenue Growth</div>
+    <div class="skill-chip"><span class="dot"></span>Greenfield Franchise Building</div>
+    <div class="skill-chip"><span class="dot"></span>Fintech Partnership &amp; Digital Transformation</div>
+    <div class="skill-chip"><span class="dot"></span>International Team Leadership (8+ people)</div>
+    <div class="skill-chip"><span class="dot"></span>KYC / AML &amp; Regulatory Compliance</div>
+    <div class="skill-chip"><span class="dot"></span>ESG &amp; Sustainable Finance</div>
+    <div class="skill-chip"><span class="dot"></span>Applied AI in Banking</div>
+    <div class="skill-chip"><span class="dot"></span>Strategic Stakeholder Engagement</div>
+  </div>
+</section>
+
+<!-- ── Experience ── -->
+<section id="experience">
+  <div class="section-label">Professional experience</div>
+  <div class="section-title">A career at the intersection of banking and innovation</div>
+  <div class="timeline">
+
+    <div class="tl-item">
+      <div class="tl-header">
+        <div>
+          <div class="tl-title">Founder</div>
+          <div class="tl-company">Aequitas Consultus</div>
+        </div>
+        <div class="tl-period">2025 — present</div>
+      </div>
+      <div class="tl-location">📍 Paris, France</div>
+      <div class="tl-body">
+        Advisory firm focused on Trade Finance, Working Capital sales development
+        and Artificial Intelligence integration for banking and financial institutions.
+        Podcast host: AI impact on banking and finance.
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-header">
+        <div>
+          <div class="tl-title">Head of Trade &amp; Working Capital Sales</div>
+          <div class="tl-company">JPMorgan AG, Paris</div>
+        </div>
+        <div class="tl-period">2020 — 2024</div>
+      </div>
+      <div class="tl-location">📍 France · Italy · Belgium · Luxembourg</div>
+      <div class="tl-body">
+        <ul>
+          <li>Built a new Trade &amp; Working Capital franchise from scratch — <strong style="color:#e2e8f0">6× revenue growth</strong> in 4 years.</li>
+          <li>Originated complex SCF, titrisation, discounting, export finance and working capital transactions.</li>
+          <li>Led strategic partnership with fintech Taulia for joint client acquisition.</li>
+          <li>Managed multicultural teams across 4 countries.</li>
+        </ul>
+        <div class="tl-badge">🏆 Adam Smith Award 2021 — Best SCF Deal (ESG · Bridgestone)</div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-header">
+        <div>
+          <div class="tl-title">Head of Trade &amp; Working Capital Origination</div>
+          <div class="tl-company">Barclays Corporate, Paris</div>
+        </div>
+        <div class="tl-period">2013 — 2020</div>
+      </div>
+      <div class="tl-location">📍 France · Belgium · Netherlands</div>
+      <div class="tl-body">
+        <ul>
+          <li>Built and managed a stable <strong style="color:#e2e8f0">€3 billion portfolio</strong> of trade finance solutions (LC, guarantees, SCF, receivables finance).</li>
+          <li>Led a team of up to 8 professionals; hiring, training, and performance management.</li>
+          <li>Served CAC 40 companies and large global traders.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-header">
+        <div>
+          <div class="tl-title">Trade &amp; Working Capital Origination</div>
+          <div class="tl-company">Barclays Corporate, Paris</div>
+        </div>
+        <div class="tl-period">2011 — 2013</div>
+      </div>
+      <div class="tl-location">📍 France · Belgium</div>
+      <div class="tl-body">
+        Designed off-balance sheet and border receivable finance structures for French and Belgian corporate clients.
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-header">
+        <div>
+          <div class="tl-title">Senior Sales — Treasury Services, Vice President</div>
+          <div class="tl-company">JPMorgan Chase Bank NA, Paris</div>
+        </div>
+        <div class="tl-period">2007 — 2011</div>
+      </div>
+      <div class="tl-location">📍 Paris, France</div>
+      <div class="tl-body">
+        Cash management, short-term investments and trade services for high-profile corporate clients.
+        Strategic lobbying with group treasurers and export finance heads.
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-header">
+        <div>
+          <div class="tl-title">Trade &amp; Cash Management Advisor</div>
+          <div class="tl-company">HSBC, Paris</div>
+        </div>
+        <div class="tl-period">2006 — 2007</div>
+      </div>
+      <div class="tl-location">📍 Paris, France</div>
+      <div class="tl-body">
+        Global Transaction Banking — payment solutions, cash management and trade finance for multinationals.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── Education ── -->
+<section id="education">
+  <div class="section-label">Education</div>
+  <div class="section-title">Academic foundation</div>
+  <div class="edu-grid">
+    <div class="edu-card">
+      <div class="edu-degree">Executive Master in Artificial Intelligence for Innovative Managers</div>
+      <div class="edu-school">Institut Mines-Télécom Business School</div>
+      <div class="edu-year">2025 — equivalent MIT Sloan</div>
+      <div class="edu-thesis">Thesis: Retail vision — scan, detect &amp; optimize in-store sales with Video Learning Models and Augmented Reality.</div>
+    </div>
+    <div class="edu-card">
+      <div class="edu-degree">Master in International Finance</div>
+      <div class="edu-school">ESC Rouen, France</div>
+      <div class="edu-year">Graduate</div>
+      <div class="edu-thesis">Thesis: Impact of the OECD arrangement on Export Credit Agencies.</div>
+    </div>
+    <div class="edu-card">
+      <div class="edu-degree">Master in Business &amp; Management, Corporate Finance</div>
+      <div class="edu-school">Pôle Universitaire Léonard de Vinci</div>
+      <div class="edu-year">Graduate</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Civic Engagement ── -->
+<section id="engagement">
+  <div class="section-label">Civic &amp; Military Engagement</div>
+  <div class="section-title">Beyond the balance sheet</div>
+  <div class="engage-grid">
+    <div class="engage-card">
+      <div class="engage-title">Institut des Hautes Études de Défense Nationale (IHEDN)</div>
+      <div class="engage-body">Selective national defence and geopolitical studies programme under the French Prime Minister's office. Covers strategic intelligence, national security and international relations.</div>
+    </div>
+    <div class="engage-card">
+      <div class="engage-title">Préparation Militaire Supérieure — Marine Nationale</div>
+      <div class="engage-body">Advanced military staff officer preparation with the French Navy. Assigned to military intelligence.</div>
+    </div>
+    <div class="engage-card">
+      <div class="engage-title">French Red Cross — County Unit Leader</div>
+      <div class="engage-body">Led emergency response and first aid operations at national crisis scale for 17 years, including Balkan conflict deployments. 🎖 Bronze Medal for exemplary humanitarian service.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Podcast ── -->
+<section id="podcast">
+  <div class="podcast-card">
+    <div class="podcast-icon">🎙️</div>
+    <div>
+      <div class="podcast-title">AI, Banking &amp; Finance — Podcast by David Perron</div>
+      <div class="podcast-desc">
+        In a world where AI is revolutionising finance, banks and financial institutions are at a crossroads.
+        How can they harness artificial intelligence to optimise working capital, enhance risk assessment,
+        and automate trade finance processes? This series demystifies AI and its practical impact on banking.
+      </div>
+      <div class="podcast-links">
+        <a href="https://www.youtube.com/@DavidPerron_Fr" target="_blank" rel="noopener" class="btn-primary" style="font-size:13px">▶ YouTube Channel</a>
+        <a href="https://www.linkedin.com/in/davidperron" target="_blank" rel="noopener" class="btn-secondary" style="font-size:13px">LinkedIn ↗</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Job Dashboard ── -->
+<section id="dashboard">
+  <div class="dashboard-card">
+    <div>
+      <h3>📊 Live Job Dashboard</h3>
+      <p>
+        Automated daily scanning of 80+ sources across banking, fintech and AI companies.
+        Each posting is scored by an LLM against my profile. Reports update every morning.
+      </p>
+      <div style="margin-top:20px">
+        <a href="/runs/index.html" class="btn-primary">Open Dashboard →</a>
+      </div>
+    </div>
+    <div class="dashboard-stats">
+      <div class="ds">
+        <div class="ds-num">80+</div>
+        <div class="ds-lbl">Sources</div>
+      </div>
+      <div class="ds">
+        <div class="ds-num">Daily</div>
+        <div class="ds-lbl">Updates</div>
+      </div>
+      <div class="ds">
+        <div class="ds-num">AI</div>
+        <div class="ds-lbl">Scored</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Contact ── -->
+<section id="contact">
+  <div class="section-label">Contact</div>
+  <div class="section-title">Let's connect</div>
+  <div class="contact-grid">
+    <a href="mailto:david.perron@gmx.fr" class="contact-item" style="color:inherit">
+      <span class="contact-icon">✉</span>
+      <div>
+        <div class="contact-label">Email</div>
+        <div class="contact-value">david.perron@gmx.fr</div>
+      </div>
+    </a>
+    <a href="tel:+33695355255" class="contact-item" style="color:inherit">
+      <span class="contact-icon">📞</span>
+      <div>
+        <div class="contact-label">Phone</div>
+        <div class="contact-value">+33 6 95 35 52 55</div>
+      </div>
+    </a>
+    <a href="https://www.linkedin.com/in/davidperron" target="_blank" rel="noopener" class="contact-item" style="color:inherit">
+      <span class="contact-icon">🔗</span>
+      <div>
+        <div class="contact-label">LinkedIn</div>
+        <div class="contact-value">in/davidperron</div>
+      </div>
+    </a>
+    <div class="contact-item">
+      <span class="contact-icon">📍</span>
+      <div>
+        <div class="contact-label">Location</div>
+        <div class="contact-value">Paris, France</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>© 2025 David Perron — ashcroftedition.org</span>
+  <span style="display:flex;gap:16px">
+    <a href="https://www.linkedin.com/in/davidperron" target="_blank" rel="noopener">LinkedIn</a>
+    <a href="https://www.youtube.com/@DavidPerron_Fr" target="_blank" rel="noopener">YouTube</a>
+    <a href="/runs/index.html">Job Dashboard</a>
+  </span>
+</footer>
+
+</body>
+</html>
