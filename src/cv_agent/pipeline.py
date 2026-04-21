@@ -24,6 +24,8 @@ from .extractors.job_description import batch_extract
 from .llm.client import LLMClient
 from .models import ApplicationDraft, JobPosting
 from .render.cv_html import render_cv_html
+from .render.index_html import write_index
+from .render.report_html import write_report
 from .settings import DATA_DIR, RUNS_DIR, Settings
 from .state import (
     add_pending,
@@ -180,6 +182,22 @@ def run_search(
                 "job": job.to_dict(),
             }, ensure_ascii=False) + "\n")
     log.info("Wrote %d scored postings to %s", len(scored), queue_path)
+
+    # Render HTML report alongside queue.jsonl
+    llm_label = f"{settings.llm_provider}/{settings.llm_model}"
+    try:
+        report_path = write_report(queue_path, llm_model=llm_label, dry_run=dry_run)
+        log.info("HTML report written to %s", report_path)
+    except Exception as e:
+        log.warning("HTML report generation failed (non-fatal): %s", e)
+
+    # Regenerate the global runs/index.html (skip for dry-runs — they land in _dry-* folders)
+    if not dry_run:
+        try:
+            index_path = write_index(RUNS_DIR)
+            log.info("Index written to %s", index_path)
+        except Exception as e:
+            log.warning("Index generation failed (non-fatal): %s", e)
 
     # Persist per-job stubs for those above mid_threshold (dry-run: keep all of them).
     threshold = 0 if dry_run else settings.mid_threshold

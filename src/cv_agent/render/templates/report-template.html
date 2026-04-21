@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{TITLE}}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --c-bg:       #0f1117;
+      --c-surface:  #1a1d27;
+      --c-border:   #2a2d3a;
+      --c-text:     #e2e8f0;
+      --c-muted:    #8892a4;
+      --c-accent:   #6366f1;
+      --c-green:    #22c55e;
+      --c-orange:   #f97316;
+      --c-yellow:   #eab308;
+      --c-red:      #ef4444;
+      --c-blue:     #3b82f6;
+      --radius:     10px;
+      --font:       -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: var(--c-bg);
+      color: var(--c-text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.6;
+      padding: 32px 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    .header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--c-border);
+      margin-bottom: 28px;
+    }
+    .header-left h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: #fff;
+    }
+    .header-left .subtitle {
+      color: var(--c-muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+    .header-meta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .meta-pill {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      color: var(--c-muted);
+    }
+    .meta-pill strong { color: var(--c-text); }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      flex: 1;
+      min-width: 130px;
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+    }
+    .stat-card .stat-num {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .stat-card .stat-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--c-muted);
+    }
+    .stat-card.green  .stat-num { color: var(--c-green); }
+    .stat-card.orange .stat-num { color: var(--c-orange); }
+    .stat-card.yellow .stat-num { color: var(--c-yellow); }
+    .stat-card.muted  .stat-num { color: var(--c-muted); }
+    .stat-card.blue   .stat-num { color: var(--c-blue); }
+
+    /* ── Filters ── */
+    .filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .filter-btn {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      color: var(--c-muted);
+      border-radius: 6px;
+      padding: 5px 14px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: var(--font);
+    }
+    .filter-btn:hover, .filter-btn.active {
+      border-color: var(--c-accent);
+      color: #fff;
+      background: rgba(99,102,241,0.15);
+    }
+
+    /* ── Section heading ── */
+    .section-heading {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--c-muted);
+      margin-bottom: 12px;
+      padding-left: 4px;
+    }
+
+    /* ── Job card ── */
+    .job-card {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 10px;
+      transition: border-color 0.15s;
+      cursor: pointer;
+    }
+    .job-card:hover { border-color: #3a3d50; }
+    .job-card.expanded { border-color: var(--c-accent); }
+
+    .job-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .score-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 52px;
+      height: 52px;
+      border-radius: 8px;
+      font-size: 20px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .score-badge .score-label {
+      font-size: 9px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      opacity: 0.7;
+      margin-top: 1px;
+    }
+    .score-badge.tier-top    { background: rgba(34,197,94,0.15);  color: var(--c-green); }
+    .score-badge.tier-good   { background: rgba(249,115,22,0.15); color: var(--c-orange); }
+    .score-badge.tier-mid    { background: rgba(234,179,8,0.15);  color: var(--c-yellow); }
+    .score-badge.tier-low    { background: rgba(239,68,68,0.12);  color: var(--c-red); }
+
+    .job-main { flex: 1; min-width: 200px; }
+    .job-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .job-company {
+      font-size: 13px;
+      color: var(--c-muted);
+      margin-bottom: 8px;
+    }
+    .job-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .tag {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(255,255,255,0.06);
+      color: var(--c-muted);
+      border: 1px solid transparent;
+    }
+    .tag.sector  { border-color: rgba(99,102,241,0.3); color: #a5b4fc; }
+    .tag.location{ border-color: rgba(59,130,246,0.3); color: #93c5fd; }
+    .tag.seniority { border-color: rgba(34,197,94,0.3); color: #86efac; }
+
+    .job-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .btn-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(99,102,241,0.15);
+      border: 1px solid rgba(99,102,241,0.3);
+      color: #a5b4fc;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 12px;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .btn-link:hover { background: rgba(99,102,241,0.3); }
+    .btn-copy {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--c-border);
+      color: var(--c-muted);
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 11px;
+      cursor: pointer;
+      font-family: var(--font);
+      transition: all 0.15s;
+    }
+    .btn-copy:hover { border-color: #3a3d50; color: var(--c-text); }
+
+    /* Score bar */
+    .score-bar-wrap {
+      margin-top: 10px;
+      height: 4px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .score-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+    .tier-top  .score-bar-fill { background: var(--c-green); }
+    .tier-good .score-bar-fill { background: var(--c-orange); }
+    .tier-mid  .score-bar-fill { background: var(--c-yellow); }
+    .tier-low  .score-bar-fill { background: var(--c-red); }
+
+    /* Rationale / details */
+    .job-details {
+      display: none;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--c-border);
+    }
+    .job-card.expanded .job-details { display: block; }
+    .rationale {
+      font-size: 13px;
+      color: var(--c-muted);
+      line-height: 1.7;
+    }
+    .rationale strong { color: var(--c-text); }
+    .fingerprint-row {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .fp-label { font-size: 11px; color: var(--c-muted); }
+    .fp-code {
+      font-family: "SFMono-Regular", "Menlo", monospace;
+      font-size: 11px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--c-border);
+      border-radius: 4px;
+      padding: 2px 8px;
+      color: var(--c-text);
+    }
+    .cmd-block {
+      margin-top: 10px;
+      font-family: "SFMono-Regular", "Menlo", monospace;
+      font-size: 11px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--c-border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #a5b4fc;
+      word-break: break-all;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 0;
+      color: var(--c-muted);
+    }
+    .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+
+    /* Footer */
+    footer {
+      margin-top: 48px;
+      padding-top: 20px;
+      border-top: 1px solid var(--c-border);
+      color: var(--c-muted);
+      font-size: 11px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      body { padding: 16px; }
+      .stat-card { min-width: 100px; }
+      .job-header { flex-direction: column; }
+      .job-actions { flex-direction: row; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>CV Agent — Résultats du {{DATE}}</h1>
+    <div class="subtitle">Rapport de recherche automatisée · {{TOTAL}} offres analysées</div>
+  </div>
+  <div class="header-meta">
+    <div class="meta-pill">🤖 <strong>{{LLM_MODEL}}</strong></div>
+    <div class="meta-pill">📅 <strong>{{DATE}}</strong></div>
+    {{DRY_RUN_PILL}}
+  </div>
+</div>
+
+<div class="stats-bar">
+  <div class="stat-card green">
+    <div class="stat-num">{{COUNT_TOP}}</div>
+    <div class="stat-label">Top ≥ 80</div>
+  </div>
+  <div class="stat-card orange">
+    <div class="stat-num">{{COUNT_GOOD}}</div>
+    <div class="stat-label">Bon 60–79</div>
+  </div>
+  <div class="stat-card yellow">
+    <div class="stat-num">{{COUNT_MID}}</div>
+    <div class="stat-label">Moyen 40–59</div>
+  </div>
+  <div class="stat-card muted">
+    <div class="stat-num">{{COUNT_LOW}}</div>
+    <div class="stat-label">Faible &lt; 40</div>
+  </div>
+  <div class="stat-card blue">
+    <div class="stat-num">{{TOTAL}}</div>
+    <div class="stat-label">Total scorés</div>
+  </div>
+</div>
+
+<div class="filters">
+  <button class="filter-btn active" onclick="filterCards('all', this)">Toutes</button>
+  <button class="filter-btn" onclick="filterCards('top', this)">Top ≥ 80</button>
+  <button class="filter-btn" onclick="filterCards('good', this)">Bon 60–79</button>
+  <button class="filter-btn" onclick="filterCards('mid', this)">Moyen 40–59</button>
+  <button class="filter-btn" onclick="filterCards('low', this)">Faible &lt; 40</button>
+</div>
+
+<div id="cards-container">
+{{JOB_CARDS}}
+</div>
+
+<div id="empty-state" class="empty-state" style="display:none">
+  <div class="icon">🔍</div>
+  <div>Aucune offre dans ce filtre.</div>
+</div>
+
+<footer>
+  <span>Généré par cv-agent · {{GENERATED_AT}}</span>
+  <span>Source : <code>runs/{{DATE}}/queue.jsonl</code></span>
+</footer>
+
+<script>
+function filterCards(tier, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const cards = document.querySelectorAll('.job-card');
+  let visible = 0;
+  cards.forEach(c => {
+    const show = tier === 'all' || c.dataset.tier === tier;
+    c.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  document.getElementById('empty-state').style.display = visible === 0 ? '' : 'none';
+}
+
+function toggleCard(el) {
+  el.classList.toggle('expanded');
+}
+
+function copyFp(fp, btn) {
+  navigator.clipboard.writeText('cv-generate --fingerprint ' + fp).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copié';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  });
+}
+</script>
+</body>
+</html>
