@@ -33,15 +33,19 @@ jobs:
           mkdir -p dist
           cp -r public/. dist/
           if [ -d runs ]; then cp -r runs dist/runs; fi
-          echo "=== dist/ ==="
-          find dist -maxdepth 3 -type f | head -40
 
       - name: Deploy to Cloudflare Workers
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          echo "Account ID set: ${{ secrets.CLOUDFLARE_ACCOUNT_ID != '' }}"
-          echo "Token set:      ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}"
-          npx wrangler@latest --version
-          npx wrangler@latest deploy --verbose 2>&1
+          echo '## Deploy diagnostics' >> $GITHUB_STEP_SUMMARY
+          echo "- Token set: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Account ID set: ${{ secrets.CLOUDFLARE_ACCOUNT_ID != '' }}" >> $GITHUB_STEP_SUMMARY
+          echo '' >> $GITHUB_STEP_SUMMARY
+          WRANGLER_OUT=$(npx wrangler@latest deploy 2>&1) || true
+          EXIT_CODE=$?
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "$WRANGLER_OUT" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          exit $EXIT_CODE
