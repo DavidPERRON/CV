@@ -43,7 +43,7 @@ jobs:
       - name: Secrets sanity check (names only, values never printed)
         run: |
           {
-            echo "### Secrets wiring (dry-run debug)"
+            echo "### Secrets wiring"
             echo ""
             echo "- ANTHROPIC_API_KEY: $([ -n \"${{ secrets.ANTHROPIC_API_KEY }}\" ] && echo OK || echo MISSING)"
             echo "- OPENAI_API_KEY:    $([ -n \"${{ secrets.OPENAI_API_KEY }}\" ] && echo OK || echo MISSING)"
@@ -57,7 +57,7 @@ jobs:
           pip install -r requirements.txt
           pip install -e .
 
-      - name: Run search (captures stdout+stderr to run.log)
+      - name: Run search
         id: run_search
         continue-on-error: true
         env:
@@ -73,64 +73,76 @@ jobs:
           ARGS="-v"
           if [ "$DRY_RUN" = "true" ]; then
             ARGS="$ARGS --dry-run"
-            if [ -n "$MAX_JOBS" ]; then
-              ARGS="$ARGS --max-jobs $MAX_JOBS"
-            fi
-            if [ -n "$WITH_DRAFTS" ] && [ "$WITH_DRAFTS" != "0" ]; then
-              ARGS="$ARGS --with-drafts $WITH_DRAFTS"
-            fi
+            [ -n "$MAX_JOBS" ] && ARGS="$ARGS --max-jobs $MAX_JOBS"
+            [ -n "$WITH_DRAFTS" ] && [ "$WITH_DRAFTS" != "0" ] && ARGS="$ARGS --with-drafts $WITH_DRAFTS"
             echo "::notice::DRY RUN — args: $ARGS"
           fi
-          mkdir -p runs
-          # tee so we have BOTH the live logs AND a copy for the step summary.
-          python -u scripts/search_and_score.py $ARGS 2>&1 | tee runs/run.log
+          # Per-run log goes to runs/<date>/run.log (not a single global file)
+          RUN_DATE=$(date -u +%F)
+          mkdir -p "runs/$RUN_DATE"
+          python -u scripts/search_and_score.py $ARGS 2>&1 | tee "runs/$RUN_DATE/run.log"
           EXIT=${PIPESTATUS[0]}
           echo "exit_code=$EXIT" >> "$GITHUB_OUTPUT"
+          echo "run_date=$RUN_DATE" >> "$GITHUB_OUTPUT"
           exit $EXIT
 
-      - name: Publish dry-run summary (always runs, self-diagnostic on failure)
-        if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.dry_run == 'true' }}
+      # ── Step summary — always, on every trigger ──────────────────────────
+      - name: Build step summary and email body
+        if: always()
+        id: format_output
         run: |
           set +e
           EXIT="${{ steps.run_search.outputs.exit_code }}"
-          {
-            echo ""
-            echo "### cv-search exit code: \`${EXIT:-unknown}\`"
-            echo ""
-          } >> "$GITHUB_STEP_SUMMARY"
+          RUN_DATE="${{ steps.run_search.outputs.run_date }}"
+          RUN_DATE="${RUN_DATE:-$(date -u +%F)}"
 
-          LATEST=""
-          if ls -1d runs/_dry-* >/dev/null 2>&1; then
-            LATEST=$(ls -1dt runs/_dry-* | head -n1)
+          # Locate the queue.jsonl (dry-run uses a timestamped folder)
+          QUEUE_PATH="runs/$RUN_DATE/queue.jsonl"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && \
+             [ "${{ inputs.dry_run }}" = "true" ]; then
+            LATEST=""
+            ls -1d runs/_dry-* >/dev/null 2>&1 && LATEST=$(ls -1dt runs/_dry-* | head -n1)
+            if [ -n "$LATEST" ]; then
+              QUEUE_PATH="$LATEST/queue.jsonl"
+              [ -f "$LATEST/summary.md" ] && cat "$LATEST/summary.md" >> "$GITHUB_STEP_SUMMARY"
+            fi
+            echo "dry_run_dir=${LATEST:-}" >> "$GITHUB_OUTPUT"
           fi
 
-          if [ -n "$LATEST" ] && [ -f "$LATEST/summary.md" ]; then
-            cat "$LATEST/summary.md" >> "$GITHUB_STEP_SUMMARY"
-          else
+          # Unified step summary + email body via script
+          python3 scripts/format_summary.py \
+            --date "$RUN_DATE" \
+            --queue-path "$QUEUE_PATH" \
+            --exit-code "${EXIT:-unknown}" \
+            --github-step-summary "$GITHUB_STEP_SUMMARY" \
+            --email-body /tmp/email_body.html \
+            --github-output "$GITHUB_OUTPUT" \
+            || true
+
+          # Self-diagnostic tail if run_search failed
+          if [ "${EXIT:-1}" != "0" ]; then
             {
-              echo "## ⚠️ Pas de summary.md produit"
               echo ""
-              echo "\`run_search\` n'est pas allé jusqu'au bout. Tail des logs :"
-              echo ""
+              echo "### ⚠️ Tail des logs (run_search a échoué)"
               echo '```'
-              tail -n 120 runs/run.log 2>/dev/null || echo "(pas de runs/run.log)"
+              tail -n 80 "runs/$RUN_DATE/run.log" 2>/dev/null || echo "(log absent)"
               echo '```'
               echo ""
-              echo "### État du répertoire runs/"
+              echo "### État runs/"
               echo '```'
-              find runs -maxdepth 3 -type f 2>/dev/null | head -n 60 || echo "(pas de dossier runs/)"
+              find runs -maxdepth 3 -type f 2>/dev/null | head -n 40
               echo '```'
             } >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Upload dry-run artifacts (runs/ + log, always)
+      - name: Upload dry-run artifacts
         if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.dry_run == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: dry-run-${{ github.run_id }}
           path: |
             runs/_dry-*/**
-            runs/run.log
+            runs/${{ steps.run_search.outputs.run_date }}/run.log
           if-no-files-found: warn
           retention-days: 14
 
@@ -140,76 +152,33 @@ jobs:
           echo "::error::cv-search exited with code ${{ steps.run_search.outputs.exit_code }}"
           exit 1
 
-      - name: Commit queue + per-job stubs
+      # ── Commit — only on scheduled / non-dry runs ─────────────────────────
+      - name: Commit results
         if: ${{ (github.event_name == 'schedule' || inputs.dry_run != 'true') && steps.run_search.outputs.exit_code == '0' }}
         run: |
+          RUN_DATE="${{ steps.run_search.outputs.run_date }}"
           git config user.name "cv-agent"
           git config user.email "cv-agent@users.noreply.github.com"
-          git add -f runs/ data/state/ || true
+          # Force-add the structured outputs, but NOT log files (too large / not useful in git)
+          git add -f \
+            "runs/$RUN_DATE/queue.jsonl" \
+            "runs/$RUN_DATE/report.html" \
+            "runs/$RUN_DATE/index.html" \
+            "runs/$RUN_DATE"/**/job.json \
+            "runs/$RUN_DATE"/**/scoring.json \
+            "runs/$RUN_DATE"/**/status.txt \
+            data/state/ \
+            2>/dev/null || true
+          # Also pick up the global runs/index.html if present
+          git add -f runs/index.html 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "daily-search: scored queue for $(date -u +%F)"
+            git commit -m "daily-search: scored queue for $RUN_DATE"
             git push
           fi
 
-      - name: Format results for email
-        if: ${{ (github.event_name == 'schedule' || inputs.dry_run != 'true') && steps.run_search.outputs.exit_code == '0' }}
-        id: format_email
-        run: |
-          python3 - <<'EOF'
-          import json, os, sys
-          from pathlib import Path
-          from datetime import datetime, timezone
-
-          today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-          queue_path = Path(f"runs/{today}/queue.jsonl")
-
-          if not queue_path.exists():
-              body = f"CV Agent — {today}\n\nAucune offre trouvée (queue.jsonl absent)."
-              Path("/tmp/email_body.txt").write_text(body)
-              with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-                  f.write("count=0\n")
-                  f.write(f"subject=CV Agent — 0 offre le {today}\n")
-              sys.exit(0)
-
-          jobs = [json.loads(l) for l in queue_path.read_text().splitlines() if l.strip()]
-          top = [j for j in jobs if j.get("score", 0) >= 80]
-          mid = [j for j in jobs if 60 <= j.get("score", 0) < 80]
-
-          lines = [
-              f"CV Agent — Résultats du {today}",
-              f"{len(jobs)} offre(s) analysée(s)\n",
-          ]
-
-          if top:
-              lines.append("=== TOP MATCHES (score ≥ 80) ===\n")
-              for j in top:
-                  lines.append(f"★  {j.get('company','?')} — {j.get('title','?')}")
-                  lines.append(f"   Score       : {j.get('score','?')}/100")
-                  lines.append(f"   URL         : {j.get('url','')}")
-                  lines.append(f"   Fingerprint : {j.get('fingerprint','')}")
-                  lines.append(f"   Commande    : cv-generate --fingerprint {j.get('fingerprint','')}\n")
-
-          if mid:
-              lines.append("=== OFFRES INTÉRESSANTES (score 60–79) ===\n")
-              for j in mid:
-                  lines.append(f"◆  {j.get('company','?')} — {j.get('title','?')}")
-                  lines.append(f"   Score       : {j.get('score','?')}/100")
-                  lines.append(f"   URL         : {j.get('url','')}")
-                  lines.append(f"   Fingerprint : {j.get('fingerprint','')}\n")
-
-          if not top and not mid:
-              lines.append("Aucune offre avec un score ≥ 60 aujourd'hui.\n")
-
-          lines.append(f"Voir tous les résultats : https://github.com/davidperron/cv/tree/main/runs/{today}")
-
-          Path("/tmp/email_body.txt").write_text("\n".join(lines))
-          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-              f.write(f"count={len(jobs)}\n")
-              f.write(f"subject=CV Agent — {len(jobs)} offre(s) le {today}\n")
-          EOF
-
+      # ── Email — only on scheduled / non-dry runs ──────────────────────────
       - name: Send email notification
         if: ${{ (github.event_name == 'schedule' || inputs.dry_run != 'true') && steps.run_search.outputs.exit_code == '0' }}
         uses: dawidd6/action-send-mail@v3
@@ -218,7 +187,7 @@ jobs:
           server_port: 587
           username: ${{ secrets.LINKEDIN_EMAIL }}
           password: ${{ secrets.GMAIL_APP_PASSWORD }}
-          subject: ${{ steps.format_email.outputs.subject }}
+          subject: ${{ steps.format_output.outputs.subject }}
           to: david.perron@gmx.fr
           from: CV Agent <${{ secrets.LINKEDIN_EMAIL }}>
-          body: file:///tmp/email_body.txt
+          html_body: file:///tmp/email_body.html
