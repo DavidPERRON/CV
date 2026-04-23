@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CV Agent — Web Control Plane</title>
+  <meta name="description" content="Pilotage des opportunités, filtres, drafts CV Word et workflow de validation." />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">CV Agent</div>
+      <div class="brand-sub">Web Control Plane</div>
+      <nav>
+        <button class="nav-btn active" data-view="dashboard">Dashboard</button>
+        <button class="nav-btn" data-view="mailboxes">Boîtes mail</button>
+        <button class="nav-btn" data-view="settings">Réglages</button>
+        <button class="nav-btn" data-view="offers">Offres</button>
+        <button class="nav-btn" data-view="workflow">Workflow</button>
+      </nav>
+      <div class="side-note">
+        Build GitHub Pages statique. Données stockées localement dans le navigateur.
+        Les identifiants sensibles et l’automatisation ATS complète restent hors du build web public.
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="page-header">
+        <div>
+          <h1 id="view-title">Dashboard</h1>
+          <p id="view-subtitle">Pilotage simple, méthodologie conservatrice, livrables Word.</p>
+        </div>
+        <div class="header-actions">
+          <button id="exportStateBtn" class="secondary">Exporter JSON</button>
+          <label class="import-label secondary">
+            Importer JSON
+            <input id="importStateInput" type="file" accept="application/json" hidden />
+          </label>
+          <button id="resetDemoBtn" class="danger ghost">Réinitialiser</button>
+        </div>
+      </header>
+
+      <section id="dashboard" class="view active">
+        <div class="cards four" id="statsCards"></div>
+        <div class="cards two">
+          <section class="card">
+            <h2>Offres prioritaires</h2>
+            <div id="priorityOffers"></div>
+          </section>
+          <section class="card">
+            <h2>Architecture retenue</h2>
+            <ul class="plain-list compact">
+              <li>frontend statique déployable sur GitHub Pages</li>
+              <li>persistant local via localStorage</li>
+              <li>manifest + service worker pour base PWA</li>
+              <li>export Word côté navigateur</li>
+              <li>service boundaries prêtes pour future enveloppe native</li>
+            </ul>
+          </section>
+        </div>
+      </section>
+
+      <section id="mailboxes" class="view">
+        <div class="cards two" id="mailboxesGrid"></div>
+      </section>
+
+      <section id="settings" class="view">
+        <div class="cards two">
+          <form id="filtersForm" class="card form">
+            <h2>Réglages de sélection</h2>
+            <label>Mode de flexibilité
+              <select name="flexibilityMode">
+                <option value="strict">strict</option>
+                <option value="balanced">balanced</option>
+                <option value="opportunistic">opportunistic</option>
+              </select>
+            </label>
+            <label>Score minimum
+              <input type="number" min="0" max="100" name="minScore" />
+            </label>
+            <div class="checkbox-row">
+              <label><input type="checkbox" name="allowRemote" /> Remote</label>
+              <label><input type="checkbox" name="allowHybrid" /> Hybride</label>
+              <label><input type="checkbox" name="allowOnsite" /> Onsite</label>
+            </div>
+            <label>Secteurs
+              <textarea name="sectors" rows="3" placeholder="banking, fintech, applied AI"></textarea>
+            </label>
+            <label>Entreprises cibles
+              <textarea name="targetCompanies" rows="3" placeholder="Nom 1, Nom 2"></textarea>
+            </label>
+            <label>Blacklist entreprises
+              <textarea name="blacklistCompanies" rows="3"></textarea>
+            </label>
+            <label>Mots-clés positifs
+              <textarea name="positiveKeywords" rows="3"></textarea>
+            </label>
+            <label>Mots-clés négatifs
+              <textarea name="negativeKeywords" rows="3"></textarea>
+            </label>
+            <label>Géographies
+              <textarea name="geographies" rows="3"></textarea>
+            </label>
+            <button type="submit">Enregistrer les réglages</button>
+          </form>
+
+          <form id="profileForm" class="card form">
+            <h2>Profil candidat</h2>
+            <label>Nom complet
+              <input name="fullName" />
+            </label>
+            <label>Titre cible
+              <input name="targetTitle" />
+            </label>
+            <label>Executive summary
+              <textarea name="summary" rows="5"></textarea>
+            </label>
+            <label>CV maître</label>
+            <textarea name="masterCvText" rows="16"></textarea>
+            <label>Faits non négociables / vérifiables
+              <textarea name="coreFacts" rows="8" placeholder="Une ligne par fait"></textarea>
+            </label>
+            <button type="submit">Enregistrer le profil</button>
+          </form>
+        </div>
+        <section class="card">
+          <h2>Méthodologie intégrée</h2>
+          <pre id="methodologyPreview" class="pre"></pre>
+        </section>
+      </section>
+
+      <section id="offers" class="view">
+        <div class="cards two">
+          <form id="offerForm" class="card form">
+            <h2>Ajouter une offre</h2>
+            <label>Titre
+              <input name="title" required />
+            </label>
+            <label>Entreprise
+              <input name="company" />
+            </label>
+            <label>Lieu
+              <input name="location" />
+            </label>
+            <label>Mode de travail
+              <select name="workMode">
+                <option value="">—</option>
+                <option value="remote">remote</option>
+                <option value="hybrid">hybrid</option>
+                <option value="onsite">onsite</option>
+              </select>
+            </label>
+            <label>Secteur
+              <input name="sector" />
+            </label>
+            <label>URL source
+              <input name="sourceUrl" />
+            </label>
+            <label>Description de l’offre
+              <textarea name="description" rows="10" required></textarea>
+            </label>
+            <button type="submit">Ajouter et scorer</button>
+          </form>
+          <section class="card">
+            <h2>Etat du build web</h2>
+            <ul class="plain-list compact">
+              <li>ajout manuel d’offres opérationnel</li>
+              <li>screening local opérationnel</li>
+              <li>génération Word opérationnelle</li>
+              <li>workflow de validation opérationnel</li>
+              <li>scraping authentifié et ATS live réservés au futur runtime natif / backend</li>
+            </ul>
+          </section>
+        </div>
+
+        <section class="card">
+          <div class="table-toolbar">
+            <h2>Pipeline des offres</h2>
+            <select id="statusFilter">
+              <option value="all">Toutes</option>
+              <option value="retained">Retenues</option>
+              <option value="screened_out">Écartées</option>
+              <option value="cv_ready">CV prêt</option>
+              <option value="validated">Validées</option>
+              <option value="ready_to_send">Prêtes à envoyer</option>
+            </select>
+          </div>
+          <div id="offersTableWrap"></div>
+        </section>
+      </section>
+
+      <section id="workflow" class="view">
+        <div class="cards two">
+          <section class="card">
+            <h2>États métier</h2>
+            <ul class="plain-list compact">
+              <li>retained</li>
+              <li>screened_out</li>
+              <li>cv_ready</li>
+              <li>validated</li>
+              <li>ready_to_send</li>
+              <li>submitted</li>
+              <li>abandoned</li>
+            </ul>
+          </section>
+          <section class="card">
+            <h2>Décision d’architecture</h2>
+            <p>
+              Cette version web publique sert de cockpit, de paramétrage, de scoring et de génération Word.
+              Les fonctions sensibles — mots de passe, OTP, formulaires ATS, sessions navigateur persistantes — sont
+              volontairement découpées pour la future cible native macOS/iOS.
+            </p>
+          </section>
+        </div>
+        <section class="card">
+          <h2>Détail offre / draft</h2>
+          <div id="offerDetailPane" class="detail-empty">Sélectionnez une offre depuis la table pour afficher le détail et générer le Word.</div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
